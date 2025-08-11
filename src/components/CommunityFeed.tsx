@@ -200,33 +200,30 @@ const CommunityFeed = () => {
       <div className="max-w-2xl mx-auto px-4 pb-20">
         <div className="space-y-4">
           {filteredPosts.map((post) => (
-            <Card key={post.id} className="p-6 hover:shadow-lg transition-shadow">
-              {/* Group Tag */}
-              <div className="mb-3">
-                <Badge 
-                  variant="secondary" 
-                  className="text-pink-600 bg-pink-50 hover:bg-pink-100 border-pink-200 px-3 py-1.5 text-sm font-medium rounded-full cursor-pointer transition-colors"
-                  onClick={() => navigateToCommunity(post.tag)}
-                >
-                  {post.tag}
-                </Badge>
-              </div>
-
-              {/* User Info */}
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 font-medium text-sm">
+            <Card key={post.id} className="p-4 hover:shadow-md transition-shadow">
+              {/* Header Section with Avatar, Community Name, and User Info */}
+              <div className="flex items-start gap-3 mb-4">
+                {/* Avatar */}
+                <div className="w-10 h-10 rounded-full bg-purple-200 flex items-center justify-center text-purple-600 font-medium text-sm flex-shrink-0">
                   {post.username.charAt(0)}
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-foreground">{post.username}</span>
-                  <span className="text-muted-foreground">•</span>
-                  <span className="text-muted-foreground text-sm">{post.timestamp}</span>
+                
+                {/* Community Name and User Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold text-gray-900 text-sm">{post.tag}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-600 text-sm">{post.username}</span>
+                    <span className="text-gray-400 text-xs">•</span>
+                    <span className="text-gray-500 text-xs">{post.timestamp}</span>
+                  </div>
                 </div>
               </div>
 
               {/* Post Content */}
               <div className="mb-4">
-                <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+                <p className="text-gray-800 leading-relaxed text-sm">
                   {post.content}
                 </p>
                 
@@ -242,26 +239,26 @@ const CommunityFeed = () => {
               </div>
 
               {/* Post Actions */}
-              <div className="flex items-center gap-6 pt-2 border-t border-border">
+              <div className="flex items-center gap-6 text-gray-500">
                 <button
                   onClick={() => handleLike(post.id)}
-                  className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors group"
+                  className="flex items-center gap-1 hover:text-red-500 transition-colors"
                 >
                   <Heart 
-                    className={`w-4 h-4 transition-all group-hover:scale-110 ${
+                    className={`w-4 h-4 ${
                       post.isLiked ? 'fill-red-500 text-red-500' : ''
                     }`}
                   />
                   <span className="text-sm">{post.likes}</span>
                 </button>
 
-                <button className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors group">
-                  <MessageCircle className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                <button className="flex items-center gap-1 hover:text-blue-500 transition-colors">
+                  <MessageCircle className="w-4 h-4" />
                   <span className="text-sm">{post.comments}</span>
                 </button>
 
-                <button className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors group">
-                  <Share className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                <button className="hover:text-blue-500 transition-colors">
+                  <Share className="w-4 h-4" />
                 </button>
               </div>
             </Card>
