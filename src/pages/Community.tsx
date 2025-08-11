@@ -235,16 +235,6 @@ const Community = () => {
           ) : (
             filteredPosts.map((post) => (
               <Card key={post.id} className="p-4 hover:shadow-md transition-shadow">
-                {/* Community Badge */}
-                <div className="mb-3">
-                  <Badge 
-                    variant="secondary" 
-                    className="text-pink-600 bg-pink-50 hover:bg-pink-100 border-pink-200 px-3 py-1.5 text-sm font-medium rounded-full"
-                  >
-                    {post.tag}
-                  </Badge>
-                </div>
-
                 {/* User Info */}
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-8 h-8 rounded-full bg-pink-200 flex items-center justify-center text-pink-600 font-medium text-sm">
