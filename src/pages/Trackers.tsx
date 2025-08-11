@@ -2,11 +2,13 @@ import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Heart, Moon, CheckSquare, Plus, ListTodo, Calendar, Pill, FileText, Bell } from "lucide-react";
+import { Heart, Moon, CheckSquare, Plus, ListTodo, Calendar, Pill, FileText, Bell, BarChart3, ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { MoodTracker } from "@/components/MoodTracker";
 import { SleepTracker } from "@/components/SleepTracker";
 import { TaskTracker } from "@/components/TaskTracker";
+import { Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ComposedChart, Scatter } from "recharts";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const taskModules = [
   {
@@ -51,10 +53,128 @@ const taskModules = [
   }
 ];
 
+// Mock data for wellness chart
+const wellnessData = [
+  { date: '2024-01-01', hours: 7.5, mood: 4 },
+  { date: '2024-01-02', hours: 8.2, mood: 5 },
+  { date: '2024-01-03', hours: 6.8, mood: 3 },
+  { date: '2024-01-04', hours: 7.9, mood: 4 },
+  { date: '2024-01-05', hours: 8.5, mood: 5 },
+  { date: '2024-01-06', hours: 7.2, mood: 4 },
+  { date: '2024-01-07', hours: 8.0, mood: 4 },
+];
+
+// Mock symptom data
+const symptomEntriesData = [
+  { id: 1, symptom: 'Morning Sickness', severity: 3, date: '2024-01-07' },
+  { id: 2, symptom: 'Fatigue', severity: 2, date: '2024-01-07' },
+  { id: 3, symptom: 'Back Pain', severity: 1, date: '2024-01-06' },
+  { id: 4, symptom: 'Headache', severity: 2, date: '2024-01-05' },
+];
+
+// DueDateEstimator Component
+const DueDateEstimator = ({ dueDateString }: { dueDateString: string }) => {
+  const calculateDaysLeft = () => {
+    const today = new Date();
+    const dueDate = new Date(dueDateString);
+    const diffTime = dueDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
+  };
+
+  const calculateWeeksPregnant = () => {
+    // Assuming 40 weeks pregnancy
+    const totalDays = 280;
+    const daysLeft = calculateDaysLeft();
+    const daysPassed = totalDays - daysLeft;
+    return Math.floor(daysPassed / 7);
+  };
+
+  const daysLeft = calculateDaysLeft();
+  const weeksPregnant = calculateWeeksPregnant();
+
+  return (
+    <Card className="p-6 bg-gradient-to-br from-pink-50 to-pink-100 border-pink-200">
+      <div className="text-center">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">Pregnancy Journey</h3>
+        <div className="grid grid-cols-2 gap-6">
+          <div>
+            <div className="text-3xl font-bold text-pink-600 mb-1">{weeksPregnant}</div>
+            <div className="text-sm text-gray-600">Weeks Pregnant</div>
+          </div>
+          <div>
+            <div className="text-3xl font-bold text-pink-600 mb-1">{daysLeft}</div>
+            <div className="text-sm text-gray-600">Days to Go</div>
+          </div>
+        </div>
+        <div className="mt-4 p-3 bg-white/60 rounded-lg">
+          <p className="text-sm text-gray-700">Due Date: {new Date(dueDateString).toLocaleDateString()}</p>
+        </div>
+      </div>
+    </Card>
+  );
+};
+
+// SymptomOverview Component
+const SymptomOverview = ({ symptomEntries }: { symptomEntries: typeof symptomEntriesData }) => {
+  const getSeverityColor = (severity: number) => {
+    if (severity <= 1) return 'bg-green-100 text-green-800';
+    if (severity <= 2) return 'bg-yellow-100 text-yellow-800';
+    return 'bg-red-100 text-red-800';
+  };
+
+  return (
+    <Card className="p-6">
+      <h3 className="font-bold text-gray-800 text-lg mb-4">Recent Symptoms</h3>
+      <div className="space-y-3">
+        {symptomEntries.map((entry) => (
+          <div key={entry.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div>
+              <span className="font-medium text-gray-800">{entry.symptom}</span>
+              <p className="text-sm text-gray-600">{entry.date}</p>
+            </div>
+            <div className={`px-2 py-1 rounded-full text-xs font-medium ${getSeverityColor(entry.severity)}`}>
+              Severity {entry.severity}/5
+            </div>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+};
+
+// Custom chart components
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+        <p className="text-sm text-gray-600">{new Date(label).toLocaleDateString()}</p>
+        <p className="text-sm font-medium text-pink-600">
+          Sleep: {payload[0].value} hours
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
+const CustomScatterShape = (props: any) => {
+  const { cx, cy, payload } = props;
+  const moodEmojis = ['😢', '😕', '😐', '😊', '😄'];
+  const emoji = moodEmojis[payload.mood - 1] || '😐';
+  
+  return (
+    <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fontSize="16">
+      {emoji}
+    </text>
+  );
+};
+
 export default function Trackers() {
-  const [activeTab, setActiveTab] = useState("mood");
+  const [activeTab, setActiveTab] = useState("overview");
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const handleModuleClick = (module: typeof taskModules[0]) => {
     setSelectedModule(module.id);
@@ -77,7 +197,14 @@ export default function Trackers() {
           </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 h-auto p-1 bg-secondary/50">
+          <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-secondary/50">
+            <TabsTrigger 
+              value="overview" 
+              className="flex items-center gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              <BarChart3 className="w-4 h-4" />
+              <span className="hidden sm:inline">Overview</span>
+            </TabsTrigger>
             <TabsTrigger 
               value="mood" 
               className="flex items-center gap-2 py-3 data-[state=active]:bg-mood-card data-[state=active]:text-primary"
@@ -102,6 +229,44 @@ export default function Trackers() {
           </TabsList>
 
           <div className="mt-6">
+            {/* Overview Tab */}
+            <TabsContent value="overview" className="mt-0">
+              <div className="space-y-6">
+                <div className="text-center md:text-left">
+                  <h2 className="text-xl font-semibold text-card-foreground mb-2">
+                    📊 Wellness Overview
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    Get insights into your pregnancy journey and wellness patterns
+                  </p>
+                </div>
+                <DueDateEstimator dueDateString="2026-04-10" />
+                <div className={`bg-white rounded-2xl shadow-sm ${isMobile ? 'p-4' : 'p-6'}`}>
+                  <div className="flex justify-between items-center mb-1">
+                    <h3 className="font-bold text-gray-800 text-lg">Weekly Sleep & Mood</h3>
+                    <div className="flex items-center space-x-2">
+                      <button className="p-2 rounded-full hover:bg-gray-100"><ChevronLeft size={20} /></button>
+                      <span className="text-sm font-medium text-gray-600">This Week</span>
+                      <button className="p-2 rounded-full hover:bg-gray-100"><ChevronRight size={20} /></button>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-500 mb-4">See how your sleep and mood are connected.</p>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ComposedChart data={wellnessData} margin={{ top: 20, right: 20, left: -10, bottom: 5 }}>
+                        <XAxis dataKey="date" tickFormatter={(str) => new Date(str).toLocaleDateString('en-US', { weekday: 'short' })} stroke="#9CA3AF" fontSize={12} />
+                        <YAxis dataKey="hours" stroke="#9CA3AF" fontSize={12} domain={[0, 12]} />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Line type="monotone" dataKey="hours" stroke={'#f4a3b8'} strokeWidth={3} dot={false} activeDot={{ r: 8 }} />
+                        <Scatter dataKey="hours" shape={<CustomScatterShape />} />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+                <SymptomOverview symptomEntries={symptomEntriesData} />
+              </div>
+            </TabsContent>
+
             <TabsContent value="mood" className="mt-0">
               <div className="space-y-4">
                 <div className="text-center md:text-left">

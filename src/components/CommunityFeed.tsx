@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CreatePostModal } from './CreatePostModal';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface Post {
   id: string;
@@ -66,7 +67,9 @@ const tags = [
   'Baby Nutrition',
   'Baby Sleep',
   'Product Recommendations',
-  'Mental Health & Wellness'
+  'Mental Health & Wellness',
+  'New Moms Connect',
+  'First Trimester Tips'
 ];
 
 const CommunityFeed = () => {
@@ -75,6 +78,18 @@ const CommunityFeed = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  // Convert community name to URL-friendly slug
+  const getCommunitySlug = (communityName: string): string => {
+    return communityName.toLowerCase().replace(/\s+/g, '-').replace(/[&]/g, '');
+  };
+
+  // Navigate to community page
+  const navigateToCommunity = (communityName: string) => {
+    const slug = getCommunitySlug(communityName);
+    navigate(`/community/${slug}`);
+  };
 
   const handleLike = (postId: string) => {
     setPosts(posts.map(post => 
@@ -113,9 +128,15 @@ const CommunityFeed = () => {
     const matchesTag = !selectedTag || post.tag === selectedTag;
     const matchesSearch = !searchQuery || 
       post.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.tag.toLowerCase().includes(searchQuery.toLowerCase());
+      post.tag.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      post.username.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesTag && matchesSearch;
   });
+
+  // Check if search query matches any community name for navigation
+  const matchingCommunity = tags.find(tag => 
+    tag.toLowerCase().includes(searchQuery.toLowerCase()) && searchQuery.length > 0
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -128,11 +149,26 @@ const CommunityFeed = () => {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
-              placeholder="Search posts, people, topics..."
+              placeholder="Search posts, people, communities..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 rounded-full bg-muted/50"
             />
+            {/* Community Search Suggestion */}
+            {matchingCommunity && searchQuery.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-border rounded-lg shadow-lg z-20">
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start p-3 h-auto"
+                  onClick={() => navigateToCommunity(matchingCommunity)}
+                >
+                  <div className="flex items-center gap-2">
+                    <Search className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm">Go to <strong>{matchingCommunity}</strong> community</span>
+                  </div>
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -151,8 +187,8 @@ const CommunityFeed = () => {
             <Badge
               key={tag}
               variant={selectedTag === tag ? "default" : "secondary"}
-              className="whitespace-nowrap cursor-pointer px-4 py-2"
-              onClick={() => setSelectedTag(tag)}
+              className="whitespace-nowrap cursor-pointer px-4 py-2 hover:bg-primary/80 transition-colors"
+              onClick={() => navigateToCommunity(tag)}
             >
               {tag}
             </Badge>
@@ -170,7 +206,7 @@ const CommunityFeed = () => {
                 <Badge 
                   variant="secondary" 
                   className="text-pink-600 bg-pink-50 hover:bg-pink-100 border-pink-200 px-3 py-1.5 text-sm font-medium rounded-full cursor-pointer transition-colors"
-                  onClick={() => setSelectedTag(post.tag)}
+                  onClick={() => navigateToCommunity(post.tag)}
                 >
                   {post.tag}
                 </Badge>

@@ -1,17 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { CircularSleepScroller } from "./CircularSleepScroller";
 
-const sleepTips = [
-  "Try sleeping on your left side to improve blood flow to your baby. Use pillows for support!",
-  "Avoid screens 1 hour before bed to improve melatonin production.",
-  "Drink water but stop at least 2 hours before sleep to avoid waking up often.",
-  "Maintain a consistent sleep schedule even on weekends.",
-  "Keep your bedroom cool and dark for better sleep quality.",
-  "Light prenatal yoga or stretching can help prepare your body for rest."
-];
 
 const sleepQualityOptions = [
   { value: 'poor', emoji: '😩', label: 'Poor' },
@@ -57,16 +49,8 @@ const getQualityAdvice = (quality: string) => {
 export function SleepTracker() {
   const [bedtime, setBedtime] = useState(22.5); // 10:30 PM
   const [waketime, setWaketime] = useState(7.5); // 7:30 AM
-  const [currentTipIndex, setCurrentTipIndex] = useState(0);
   const { toast } = useToast();
 
-  // Rotate tips every 10 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTipIndex((prev) => (prev + 1) % sleepTips.length);
-    }, 10000);
-    return () => clearInterval(interval);
-  }, []);
 
   const formatTime = (hours: number) => {
     const h = Math.floor(hours);
@@ -108,20 +92,6 @@ export function SleepTracker() {
 
   return (
     <div className="space-y-6">
-      {/* Sleep Tips Box */}
-      <Card className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200 p-4 rounded-2xl">
-        <div className="flex items-start gap-3">
-          <div className="text-xl">💡</div>
-          <div>
-            <h3 className="font-semibold text-purple-900 mb-1">
-              Sleep Tip
-            </h3>
-            <p className="text-purple-700 text-sm leading-relaxed">
-              {sleepTips[currentTipIndex]}
-            </p>
-          </div>
-        </div>
-      </Card>
 
       {/* Sleep Scroller Component */}
       <Card className="p-6 rounded-2xl bg-white border border-gray-200 shadow-sm">
