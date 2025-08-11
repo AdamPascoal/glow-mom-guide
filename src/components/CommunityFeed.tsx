@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Heart, MessageCircle, Share, Search, Plus } from 'lucide-react';
+import { Heart, MessageCircle, Share, Search, Plus, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -142,39 +142,58 @@ const CommunityFeed = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
-        <div className="max-w-2xl mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-center mb-4">Home</h1>
-          
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-            <Input
-              placeholder="Search posts, people, communities..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 rounded-full bg-muted/50"
-            />
-            {/* Community Search Suggestion */}
-            {matchingCommunity && searchQuery.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-border rounded-lg shadow-lg z-20">
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start p-3 h-auto"
-                  onClick={() => navigateToCommunity(matchingCommunity)}
-                >
-                  <div className="flex items-center gap-2">
-                    <Search className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm">Go to <strong>{matchingCommunity}</strong> community</span>
-                  </div>
-                </Button>
-              </div>
-            )}
+        <div className="max-w-2xl mx-auto px-4 py-3">
+          {/* Header with Logo and Icons */}
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl font-bold text-foreground">BumpDaily</h1>
+            <div className="flex items-center gap-4">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="p-2"
+                onClick={() => setSearchQuery(searchQuery ? '' : 'search')}
+              >
+                <Search className="w-5 h-5" />
+              </Button>
+              <Button variant="ghost" size="sm" className="p-2">
+                <Bell className="w-5 h-5" />
+              </Button>
+            </div>
           </div>
+          
+          {/* Search - Hidden by default, shown when search icon is clicked */}
+          {searchQuery && (
+            <div className="relative mt-3">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Input
+                placeholder="Search posts, people, communities..."
+                value={searchQuery === 'search' ? '' : searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 rounded-full bg-muted/50"
+                autoFocus
+              />
+              {/* Community Search Suggestion */}
+              {matchingCommunity && searchQuery.length > 0 && searchQuery !== 'search' && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-border rounded-lg shadow-lg z-20">
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start p-3 h-auto"
+                    onClick={() => navigateToCommunity(matchingCommunity)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Search className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm">Go to <strong>{matchingCommunity}</strong> community</span>
+                    </div>
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Tag Filter */}
-      <div className="max-w-2xl mx-auto px-4 py-4">
+      <div className="max-w-2xl mx-auto px-4 py-3 pt-4">
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
           <Badge
             variant={selectedTag === null ? "default" : "secondary"}
@@ -198,9 +217,13 @@ const CommunityFeed = () => {
 
       {/* Feed */}
       <div className="max-w-2xl mx-auto px-4 pb-20">
-        <div className="space-y-4">
+        <div className="space-y-4 mt-3">
           {filteredPosts.map((post) => (
-            <Card key={post.id} className="p-4 hover:shadow-md transition-shadow">
+            <Card 
+              key={post.id} 
+              className="p-4 hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => navigate(`/post/${post.id}`)}
+            >
               {/* Header Section with Avatar, Community Name, and User Info */}
               <div className="flex items-start gap-3 mb-4">
                 {/* Avatar */}
@@ -275,7 +298,7 @@ const CommunityFeed = () => {
       <Button
         size="icon"
         onClick={() => setIsCreateModalOpen(true)}
-        className="fixed bottom-20 right-4 w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-shadow bg-pink-500 hover:bg-pink-600"
+        className="fixed bottom-20 right-4 w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all bg-pink-400/70 hover:bg-pink-400/80 backdrop-blur-md border border-pink-300/20 text-white"
       >
         <Plus className="w-6 h-6" />
       </Button>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Heart, MessageCircle, Share, Search, Plus, Users, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -189,12 +189,12 @@ const Community = () => {
       <div className="pt-16 bg-background">
         {/* Scrollable Community Info Section */}
         <div className="max-w-2xl mx-auto px-4 py-2">
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-2">
           <div className="w-12 h-12 rounded-full bg-purple-200 flex items-center justify-center text-purple-600">
             <Users className="w-6 h-6" />
           </div>
           <div className="flex-1">
-            <h2 className="text-xl font-bold text-foreground mb-2">
+            <h2 className="text-xl font-bold text-foreground mb-1">
               {currentCommunity}
             </h2>
             <div className="flex items-center gap-3 text-sm text-muted-foreground">
@@ -213,7 +213,7 @@ const Community = () => {
 
         {/* Posts Feed */}
         <div className="max-w-2xl mx-auto px-4 pb-20">
-        <div className="space-y-4 mt-4">
+        <div className="space-y-4">
           {filteredPosts.length === 0 ? (
             <Card className="p-8 text-center">
               <div className="text-6xl mb-4">🌟</div>
@@ -231,16 +231,23 @@ const Community = () => {
             </Card>
           ) : (
             filteredPosts.map((post) => (
-              <Card key={post.id} className="p-4 hover:shadow-md transition-shadow">
-                {/* User Info */}
+              <Card 
+                key={post.id} 
+                className="p-4 hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => navigate(`/post/${post.id}`)}
+              >
+                {/* Header Section with Avatar and User Info */}
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 rounded-full bg-pink-200 flex items-center justify-center text-pink-600 font-medium text-sm">
+                  {/* Avatar */}
+                  <div className="w-10 h-10 rounded-full bg-purple-200 flex items-center justify-center text-purple-600 font-medium text-sm flex-shrink-0">
                     {post.username.charAt(0)}
                   </div>
+                  
+                  {/* User Info */}
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-foreground">{post.username}</span>
-                    <span className="text-muted-foreground">•</span>
-                    <span className="text-muted-foreground text-sm">{post.timestamp}</span>
+                    <span className="text-gray-900 text-sm font-medium">{post.username}</span>
+                    <span className="text-gray-400 text-xs">•</span>
+                    <span className="text-gray-500 text-xs">{post.timestamp}</span>
                   </div>
                 </div>
 
@@ -294,7 +301,7 @@ const Community = () => {
       <Button
         size="icon"
         onClick={() => setIsCreateModalOpen(true)}
-        className="fixed bottom-20 right-4 w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-shadow bg-pink-500 hover:bg-pink-600"
+        className="fixed bottom-20 right-4 w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all bg-pink-400/70 hover:bg-pink-400/80 backdrop-blur-md border border-pink-300/20 text-white"
       >
         <Plus className="w-6 h-6" />
       </Button>

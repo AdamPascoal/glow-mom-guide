@@ -8,6 +8,7 @@ import Trackers from "./pages/Trackers";
 import Library from "./pages/Library";
 import Profile from "./pages/Profile";
 import Community from "./pages/Community";
+import PostDetail from "./pages/PostDetail";
 import NotFound from "./pages/NotFound";
 import AddTask from "./pages/AddTask";
 import MyTasks from "./pages/MyTasks";
@@ -31,6 +32,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/community/:communityName" element={<Community />} />
+              <Route path="/post/:postId" element={<PostDetail />} />
               <Route path="/trackers" element={<Trackers />} />
               <Route path="/add-task" element={<AddTask />} />
               <Route path="/my-tasks" element={<MyTasks />} />
