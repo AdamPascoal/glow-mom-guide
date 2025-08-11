@@ -179,27 +179,7 @@ const Community = () => {
             </div>
           </div>
 
-          {/* Community Info Section */}
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-full bg-purple-200 flex items-center justify-center text-purple-600">
-              <Users className="w-5 h-5" />
-            </div>
-            <div className="flex-1">
-              <h2 className="text-lg font-bold text-foreground mb-1">
-                {currentCommunity}
-              </h2>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>{communityPosts.length} posts</span>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="bg-pink-200 hover:bg-pink-300 text-pink-700 border-pink-300"
-                >
-                  Join
-                </Button>
-              </div>
-            </div>
-          </div>
+
 
 
           
@@ -207,8 +187,32 @@ const Community = () => {
         </div>
       </div>
 
+      {/* Scrollable Community Info Section */}
+      <div className="max-w-2xl mx-auto px-4 py-6">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-12 h-12 rounded-full bg-purple-200 flex items-center justify-center text-purple-600">
+            <Users className="w-6 h-6" />
+          </div>
+          <div className="flex-1">
+            <h2 className="text-xl font-bold text-foreground mb-2">
+              {currentCommunity}
+            </h2>
+            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              <span>{communityPosts.length} posts</span>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="bg-pink-200 hover:bg-pink-300 text-pink-700 border-pink-300 px-4 py-2"
+              >
+                Join
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Posts Feed */}
-      <div className="max-w-2xl mx-auto px-4 pb-20 pt-4">
+      <div className="max-w-2xl mx-auto px-4 pb-20">
         <div className="space-y-4 mt-4">
           {filteredPosts.length === 0 ? (
             <Card className="p-8 text-center">
