@@ -172,23 +172,30 @@ const Community = () => {
               variant="ghost"
               size="sm"
               onClick={handleBackToHome}
-              className="p-2"
+              className="p-2 text-purple-600 hover:text-purple-700"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-5 h-5" />
             </Button>
-            <div className="flex-1">
-              <h1 className="text-xl font-bold text-foreground">
+            <div className="flex-1 text-center">
+              <h1 className="text-xl font-bold text-foreground mb-2">
                 {currentCommunity}
               </h1>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                 <Users className="w-4 h-4" />
                 <span>{communityPosts.length} posts</span>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="ml-2 bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300"
+                >
+                  Join
+                </Button>
               </div>
             </div>
           </div>
 
           {/* Community Description */}
-          <div className="mb-4 p-3 bg-muted/30 rounded-lg">
+          <div className="mb-4 text-center">
             <p className="text-sm text-muted-foreground">
               {communityDescriptions[currentCommunity as keyof typeof communityDescriptions] || 'Community discussion space.'}
             </p>
@@ -198,10 +205,10 @@ const Community = () => {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
-              placeholder={`Search in ${currentCommunity}...`}
+              placeholder="Search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 rounded-full bg-muted/50"
+              className="pl-10 rounded-full bg-gray-100 border-gray-200"
             />
           </div>
         </div>
@@ -227,7 +234,7 @@ const Community = () => {
             </Card>
           ) : (
             filteredPosts.map((post) => (
-              <Card key={post.id} className="p-6 hover:shadow-lg transition-shadow">
+              <Card key={post.id} className="p-4 hover:shadow-md transition-shadow">
                 {/* Community Badge */}
                 <div className="mb-3">
                   <Badge 
@@ -240,7 +247,7 @@ const Community = () => {
 
                 {/* User Info */}
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 font-medium text-sm">
+                  <div className="w-8 h-8 rounded-full bg-pink-200 flex items-center justify-center text-pink-600 font-medium text-sm">
                     {post.username.charAt(0)}
                   </div>
                   <div className="flex items-center gap-2">
@@ -252,7 +259,7 @@ const Community = () => {
 
                 {/* Post Content */}
                 <div className="mb-4">
-                  <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+                  <p className="text-gray-800 leading-relaxed text-sm">
                     {post.content}
                   </p>
                   
@@ -268,26 +275,26 @@ const Community = () => {
                 </div>
 
                 {/* Post Actions */}
-                <div className="flex items-center gap-6 pt-2 border-t border-border">
+                <div className="flex items-center gap-6 text-gray-500">
                   <button
                     onClick={() => handleLike(post.id)}
-                    className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors group"
+                    className="flex items-center gap-1 hover:text-red-500 transition-colors"
                   >
                     <Heart 
-                      className={`w-4 h-4 transition-all group-hover:scale-110 ${
+                      className={`w-4 h-4 ${
                         post.isLiked ? 'fill-red-500 text-red-500' : ''
                       }`}
                     />
                     <span className="text-sm">{post.likes}</span>
                   </button>
 
-                  <button className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors group">
-                    <MessageCircle className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                  <button className="flex items-center gap-1 hover:text-blue-500 transition-colors">
+                    <MessageCircle className="w-4 h-4" />
                     <span className="text-sm">{post.comments}</span>
                   </button>
 
-                  <button className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors group">
-                    <Share className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                  <button className="hover:text-blue-500 transition-colors">
+                    <Share className="w-4 h-4" />
                   </button>
                 </div>
               </Card>
