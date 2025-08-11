@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Heart, MessageCircle, Share, Search, Plus, ArrowLeft, Users } from 'lucide-react';
+import { Heart, MessageCircle, Share, Search, Plus, ArrowLeft, Users, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -163,30 +163,37 @@ const Community = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
+      {/* Top Header Bar with Logo and Icons */}
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
         <div className="max-w-2xl mx-auto px-4 py-4">
-          {/* Back button and Community Info */}
+          {/* Company Logo and Right Icons */}
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-xl font-bold text-foreground">BumpDaily</h1>
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="sm" className="p-2">
+                <Search className="w-5 h-5" />
+              </Button>
+              <Button variant="ghost" size="sm" className="p-2">
+                <Bell className="w-5 h-5" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Community Info Section */}
           <div className="flex items-center gap-3 mb-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleBackToHome}
-              className="p-2 text-purple-600 hover:text-purple-700"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <div className="flex-1 text-center">
-              <h1 className="text-xl font-bold text-foreground mb-2">
+            <div className="w-10 h-10 rounded-full bg-purple-200 flex items-center justify-center text-purple-600">
+              <Users className="w-5 h-5" />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-lg font-bold text-foreground mb-1">
                 {currentCommunity}
-              </h1>
-              <div className="flex items-center justify-start gap-2 text-sm text-muted-foreground">
-                <Users className="w-4 h-4" />
+              </h2>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span>{communityPosts.length} posts</span>
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="ml-2 bg-pink-200 hover:bg-pink-300 text-pink-700 border-pink-300"
+                  className="bg-pink-200 hover:bg-pink-300 text-pink-700 border-pink-300"
                 >
                   Join
                 </Button>
@@ -196,16 +203,7 @@ const Community = () => {
 
 
           
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-            <Input
-              placeholder="Search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 rounded-full bg-gray-100 border-gray-200"
-            />
-          </div>
+
         </div>
       </div>
 
