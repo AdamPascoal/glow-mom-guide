@@ -194,12 +194,7 @@ const Community = () => {
             </div>
           </div>
 
-          {/* Community Description */}
-          <div className="mb-4 text-center">
-            <p className="text-sm text-muted-foreground">
-              {communityDescriptions[currentCommunity as keyof typeof communityDescriptions] || 'Community discussion space.'}
-            </p>
-          </div>
+
           
           {/* Search */}
           <div className="relative">
