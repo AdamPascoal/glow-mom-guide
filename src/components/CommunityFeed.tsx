@@ -211,7 +211,12 @@ const CommunityFeed = () => {
                 {/* Community Name and User Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="font-semibold text-gray-900 text-sm">{post.tag}</span>
+                    <span 
+                      className="font-semibold text-gray-900 text-sm hover:text-blue-600 cursor-pointer transition-colors"
+                      onClick={() => navigateToCommunity(post.tag)}
+                    >
+                      {post.tag}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-gray-600 text-sm">{post.username}</span>
