@@ -211,8 +211,8 @@ const Community = () => {
         </div>
       </div>
 
-      {/* Posts Feed */}
-      <div className="max-w-2xl mx-auto px-4 pb-20">
+        {/* Posts Feed */}
+        <div className="max-w-2xl mx-auto px-4 pb-20">
         <div className="space-y-4 mt-4">
           {filteredPosts.length === 0 ? (
             <Card className="p-8 text-center">
@@ -299,13 +299,14 @@ const Community = () => {
         <Plus className="w-6 h-6" />
       </Button>
 
-      {/* Create Post Modal */}
-      <CreatePostModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onSubmit={handleCreatePost}
-        defaultTag={currentCommunity}
-      />
+        {/* Create Post Modal */}
+        <CreatePostModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          onSubmit={handleCreatePost}
+          defaultTag={currentCommunity}
+        />
+      </div>
     </div>
   );
 };
