@@ -163,11 +163,11 @@ const Community = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Top Header Bar with Logo and Icons */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
+      {/* Fixed Top Header Bar with Logo and Icons */}
+      <div className="fixed top-0 left-0 right-0 z-20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
         <div className="max-w-2xl mx-auto px-4 py-4">
           {/* Company Logo and Right Icons */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between">
             <h1 className="text-xl font-bold text-foreground">BumpDaily</h1>
             <div className="flex items-center gap-4">
               <Button variant="ghost" size="sm" className="p-2">
@@ -208,7 +208,7 @@ const Community = () => {
       </div>
 
       {/* Posts Feed */}
-      <div className="max-w-2xl mx-auto px-4 pb-20">
+      <div className="max-w-2xl mx-auto px-4 pb-20 pt-4">
         <div className="space-y-4 mt-4">
           {filteredPosts.length === 0 ? (
             <Card className="p-8 text-center">
