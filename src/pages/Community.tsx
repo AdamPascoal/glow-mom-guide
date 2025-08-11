@@ -187,8 +187,10 @@ const Community = () => {
         </div>
       </div>
 
-      {/* Scrollable Community Info Section */}
-      <div className="max-w-2xl mx-auto px-4 py-6">
+      {/* Scrollable Content Area with Top Padding */}
+      <div className="pt-16 bg-background">
+        {/* Scrollable Community Info Section */}
+        <div className="max-w-2xl mx-auto px-4 py-2">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-12 h-12 rounded-full bg-purple-200 flex items-center justify-center text-purple-600">
             <Users className="w-6 h-6" />
