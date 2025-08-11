@@ -180,13 +180,13 @@ const Community = () => {
               <h1 className="text-xl font-bold text-foreground mb-2">
                 {currentCommunity}
               </h1>
-              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center justify-start gap-2 text-sm text-muted-foreground">
                 <Users className="w-4 h-4" />
                 <span>{communityPosts.length} posts</span>
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="ml-2 bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300"
+                  className="ml-2 bg-pink-200 hover:bg-pink-300 text-pink-700 border-pink-300"
                 >
                   Join
                 </Button>
