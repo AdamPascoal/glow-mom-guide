@@ -18,8 +18,8 @@ import DoctorAppointmentForm from "./components/forms/DoctorAppointmentForm";
 import VitaminSupplementForm from "./components/forms/VitaminSupplementForm";
 import MedicalTestForm from "./components/forms/MedicalTestForm";
 import PersonalReminderForm from "./components/forms/PersonalReminderForm";
-import MoodTrackerForm from "./pages/MoodTrackerForm";
-import SleepTrackerForm from "./pages/SleepTrackerForm";
+import MoodTrackerForm from "./components/forms/MoodTrackerForm";
+import SleepTrackerForm from "./components/forms/SleepTrackerForm";
 import { MobileNavigation, DesktopNavigation } from "./components/layout/Navigation";
 
 const queryClient = new QueryClient();

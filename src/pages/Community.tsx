@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CreatePostModal } from '@/components/CreatePostModal';
+import { CreatePostModal } from '@/components/features/community/CreatePostModal';
 import { useToast } from '@/hooks/use-toast';
 
 interface Post {

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft, Moon } from "lucide-react";
-import { SleepTracker } from "@/components/SleepTracker";
+import { SleepTracker } from "@/components/features/sleep/SleepTracker";
 import { useToast } from "@/hooks/use-toast";
 
 export default function SleepTrackerForm() {

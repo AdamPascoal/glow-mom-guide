@@ -1,4 +1,4 @@
-import CommunityFeed from '@/components/CommunityFeed';
+import CommunityFeed from '@/components/features/community/CommunityFeed';
 
 const Index = () => {
   return <CommunityFeed />;
