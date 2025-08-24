@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft, Heart } from "lucide-react";
-import { MoodTracker } from "@/components/MoodTracker";
+import { MoodTracker } from "@/components/features/mood/MoodTracker";
 import { useToast } from "@/hooks/use-toast";
 
 export default function MoodTrackerForm() {
