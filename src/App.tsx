@@ -17,6 +17,7 @@ import DoctorAppointmentForm from "./pages/DoctorAppointmentForm";
 import VitaminSupplementForm from "./pages/VitaminSupplementForm";
 import MedicalTestForm from "./pages/MedicalTestForm";
 import PersonalReminderForm from "./pages/PersonalReminderForm";
+import LoginInfo from "./pages/LoginInfo";
 import { MobileNavigation, DesktopNavigation } from "./components/Navigation";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const App = () => (
               <Route path="/add-task/vitamin-supplement" element={<VitaminSupplementForm />} />
               <Route path="/add-task/medical-test" element={<MedicalTestForm />} />
               <Route path="/add-task/personal-reminder" element={<PersonalReminderForm />} />
+              <Route path="/login-info" element={<LoginInfo />} />
               <Route path="/library" element={<Library />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="*" element={<NotFound />} />
