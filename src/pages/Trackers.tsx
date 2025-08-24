@@ -9,6 +9,7 @@ import { SleepTracker } from "@/components/SleepTracker";
 import { TaskTracker } from "@/components/TaskTracker";
 import { Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ComposedChart, Scatter } from "recharts";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useMotherhoodStage } from "@/contexts/MotherhoodStageContext";
 
 const taskModules = [
   {
@@ -171,11 +172,19 @@ const CustomScatterShape = (props: any) => {
 };
 
 export default function Trackers() {
-  const [activeTab, setActiveTab] = useState("overview");
+  const { getVisibleTrackers, isTrackerVisible } = useMotherhoodStage();
+  const visibleTabs = getVisibleTrackers();
+  const [activeTab, setActiveTab] = useState(visibleTabs[0] || "mood");
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
   const [upcomingAppointments, setUpcomingAppointments] = useState<any[]>([]);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+
+  useEffect(() => {
+    if (!visibleTabs.includes(activeTab)) {
+      setActiveTab(visibleTabs[0] || "mood");
+    }
+  }, [visibleTabs, activeTab]);
 
   // Load upcoming appointments from localStorage
   useEffect(() => {
@@ -210,35 +219,43 @@ export default function Trackers() {
           </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-secondary/50">
-            <TabsTrigger 
-              value="overview" 
-              className="flex items-center gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-            >
-              <BarChart3 className="w-4 h-4" />
-              <span className="hidden sm:inline">Overview</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="mood" 
-              className="flex items-center gap-2 py-3 data-[state=active]:bg-mood-card data-[state=active]:text-primary"
-            >
-              <Heart className="w-4 h-4" />
-              <span className="hidden sm:inline">Mood</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="sleep"
-              className="flex items-center gap-2 py-3 data-[state=active]:bg-sleep-muted data-[state=active]:text-sleep-primary"
-            >
-              <Moon className="w-4 h-4" />
-              <span className="hidden sm:inline">Sleep</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="tasks"
-              className="flex items-center gap-2 py-3 data-[state=active]:bg-task-card data-[state=active]:text-task-primary"
-            >
-              <CheckSquare className="w-4 h-4" />
-              <span className="hidden sm:inline">Tasks</span>
-            </TabsTrigger>
+          <TabsList className={`grid w-full h-auto p-1 bg-secondary/50`} style={{ gridTemplateColumns: `repeat(${visibleTabs.length}, 1fr)` }}>
+            {visibleTabs.includes('overview') && (
+              <TabsTrigger 
+                value="overview" 
+                className="flex items-center gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <BarChart3 className="w-4 h-4" />
+                <span className="hidden sm:inline">Overview</span>
+              </TabsTrigger>
+            )}
+            {visibleTabs.includes('mood') && (
+              <TabsTrigger 
+                value="mood" 
+                className="flex items-center gap-2 py-3 data-[state=active]:bg-mood-card data-[state=active]:text-primary"
+              >
+                <Heart className="w-4 h-4" />
+                <span className="hidden sm:inline">Mood</span>
+              </TabsTrigger>
+            )}
+            {visibleTabs.includes('sleep') && (
+              <TabsTrigger 
+                value="sleep"
+                className="flex items-center gap-2 py-3 data-[state=active]:bg-sleep-muted data-[state=active]:text-sleep-primary"
+              >
+                <Moon className="w-4 h-4" />
+                <span className="hidden sm:inline">Sleep</span>
+              </TabsTrigger>
+            )}
+            {visibleTabs.includes('tasks') && (
+              <TabsTrigger 
+                value="tasks"
+                className="flex items-center gap-2 py-3 data-[state=active]:bg-task-card data-[state=active]:text-task-primary"
+              >
+                <CheckSquare className="w-4 h-4" />
+                <span className="hidden sm:inline">Tasks</span>
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <div className="mt-6">
@@ -253,7 +270,9 @@ export default function Trackers() {
                     Get insights into your pregnancy journey and wellness patterns
                   </p>
                 </div>
-                <DueDateEstimator dueDateString="2026-04-10" />
+                {isTrackerVisible('pregnancy-journey') && (
+                  <DueDateEstimator dueDateString="2026-04-10" />
+                )}
                 
                 {/* Upcoming Appointments */}
                 <Card className="px-6 pt-6 pb-3 bg-transparent border-red-200">
@@ -407,7 +426,7 @@ export default function Trackers() {
 
                 {/* 4-Box Wellness Module Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl mx-auto">
-                  {taskModules.map((module) => {
+                  {taskModules.filter(module => isTrackerVisible(module.id)).map((module) => {
                     const IconComponent = module.icon;
                     const isSelected = selectedModule === module.id;
                     

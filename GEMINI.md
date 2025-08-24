@@ -1,6 +1,6 @@
-# CLAUDE.md
+# GEMINI.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Gemini when working with code in this repository.
 
 ## Project Overview
 
@@ -106,11 +106,6 @@ src/
 - React Refresh for hot reload
 - Unused variables warnings disabled (`@typescript-eslint/no-unused-vars: "off"`)
 
-### Lovable Integration
-- Project connected to Lovable platform for collaborative development
-- `lovable-tagger` plugin for development mode component tagging
-- Changes sync automatically between local development and Lovable
-
 ## Data Models
 
 ### Post Structure (Community)
@@ -154,5 +149,3 @@ interface Task {
 - Vite production builds optimized
 - Static asset handling configured
 - Environment-based configuration support
-- Lovable platform deployment integration available
-- Add to Memory, Always follow the design principle across the app, and also make sure the Alignements are aligned and Autoresponsive

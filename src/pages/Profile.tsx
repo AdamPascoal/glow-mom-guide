@@ -1,24 +1,31 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { User, Heart, TrendingUp, Info, FileText, Shield, MessageCircle, Calendar, ThumbsUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useMotherhoodStage, type MotherhoodStage } from "@/contexts/MotherhoodStageContext";
 
 export default function Profile() {
+  const { currentStage, setCurrentStage } = useMotherhoodStage();
+  
   const [userInfo, setUserInfo] = useState({
     name: "Sarah Johnson",
     age: "28",
     email: "sarah.johnson@email.com",
     phoneNumber: "+1 (555) 123-4567",
     dateOfBirth: "1996-03-15",
-    firstChild: "No",
+    pregnancyStage: currentStage,
     joinDate: "2024-01-15",
     wellnessGoal: "Mental Health & Sleep",
     language: "English",
     rank: "Secret Agent"
   });
+
+  useEffect(() => {
+    setUserInfo(prev => ({ ...prev, pregnancyStage: currentStage }));
+  }, [currentStage]);
 
   // Mock data for user's posts and comments
   const [userPosts] = useState([
@@ -231,15 +238,20 @@ export default function Profile() {
             </div>
 
             <div className="flex items-center justify-between">
-              <Label htmlFor="firstChild" className="text-sm font-medium">First Child</Label>
+              <Label htmlFor="motherhoodStage" className="text-sm font-medium">Motherhood Stage</Label>
               <select
-                id="firstChild"
-                value={userInfo.firstChild}
-                onChange={(e) => setUserInfo(prev => ({ ...prev, firstChild: e.target.value }))}
-                className="mt-1 px-3 py-2 border border-input bg-background text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent min-w-[120px]"
+                id="pregnancyStage"
+                value={userInfo.pregnancyStage}
+                onChange={(e) => {
+                  const newStage = e.target.value as MotherhoodStage;
+                  setUserInfo(prev => ({ ...prev, pregnancyStage: newStage }));
+                  setCurrentStage(newStage);
+                }}
+                className="mt-1 px-3 py-2 border border-input bg-background text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent min-w-[160px]"
               >
-                <option value="Yes">Yes</option>
-                <option value="No">No</option>
+                <option value="Trying to Conceive">Trying to Conceive</option>
+                <option value="Incubator Stage">Incubator Stage</option>
+                <option value="Veteran Stage">Veteran Stage</option>
               </select>
             </div>
 
@@ -390,13 +402,6 @@ export default function Profile() {
           </div>
         </Card>
 
-        {/* Save Button */}
-        <div className="mt-8 flex justify-center md:justify-end">
-          <Button onClick={handleSave} className="w-full md:w-auto px-8">
-            <Heart className="w-4 h-4 mr-2" />
-            Save Preferences
-          </Button>
-        </div>
 
         {/* About Card */}
         <Card className="p-6 mt-6">
@@ -453,6 +458,32 @@ export default function Profile() {
             </Button>
           </div>
         </Card>
+
+        {/* Account Actions */}
+        <div className="mt-6 flex flex-col md:flex-row justify-center md:justify-end gap-4">
+          <Button 
+            variant="outline" 
+            className="w-full md:w-auto px-8"
+            onClick={() => toast({
+              title: "Logged out",
+              description: "You have been successfully logged out.",
+              duration: 3000,
+            })}
+          >
+            Logout
+          </Button>
+          <Button 
+            variant="destructive" 
+            className="w-full md:w-auto px-8"
+            onClick={() => toast({
+              title: "Account deletion requested",
+              description: "Please contact support to delete your account.",
+              duration: 3000,
+            })}
+          >
+            Delete Account
+          </Button>
+        </div>
 
       </div>
     </div>
