@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
-import { Heart, Users, Baby, Bed } from "lucide-react";
+import { Heart, Users, Baby, Bed, History, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const moods = [
@@ -31,11 +31,29 @@ const getMoodAdvice = (mood: string, reason?: string) => {
   return adviceMap[mood as keyof typeof adviceMap] || "Thank you for tracking your mood. This helps you stay aware of your emotional patterns.";
 };
 
+interface MoodEntry {
+  id: string;
+  mood: string;
+  reasons: string[];
+  notes: string;
+  date: string;
+  timestamp: number;
+}
+
 export function MoodTracker() {
   const [selectedMood, setSelectedMood] = useState<string>("");
   const [selectedReasons, setSelectedReasons] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
+  const [moodHistory, setMoodHistory] = useState<MoodEntry[]>([]);
   const { toast } = useToast();
+
+  // Load mood history from localStorage on component mount
+  useEffect(() => {
+    const savedHistory = localStorage.getItem('moodHistory');
+    if (savedHistory) {
+      setMoodHistory(JSON.parse(savedHistory));
+    }
+  }, []);
 
   const handleMoodSelect = (mood: string) => {
     setSelectedMood(mood);
@@ -52,6 +70,19 @@ export function MoodTracker() {
   const handleSubmit = () => {
     if (!selectedMood) return;
     
+    const newEntry: MoodEntry = {
+      id: Date.now().toString(),
+      mood: selectedMood,
+      reasons: selectedReasons,
+      notes: notes,
+      date: new Date().toLocaleDateString(),
+      timestamp: Date.now()
+    };
+
+    const updatedHistory = [newEntry, ...moodHistory];
+    setMoodHistory(updatedHistory);
+    localStorage.setItem('moodHistory', JSON.stringify(updatedHistory));
+    
     const advice = getMoodAdvice(selectedMood, selectedReasons[0]);
     
     toast({
@@ -66,17 +97,18 @@ export function MoodTracker() {
     setNotes("");
   };
 
+  const getMoodEmoji = (mood: string) => {
+    const moodObj = moods.find(m => m.value === mood);
+    return moodObj ? moodObj.emoji : "😐";
+  };
+
+  const getMoodLabel = (mood: string) => {
+    const moodObj = moods.find(m => m.value === mood);
+    return moodObj ? moodObj.label : mood;
+  };
+
   return (
     <div className="min-h-screen bg-background p-4 pb-24">
-      {/* Header Section */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-foreground mb-2">
-          Mood Tracker
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Track your emotional wellness with evidence-based insights
-        </p>
-      </div>
 
       {/* Mood Selector Section */}
       <div className="mb-8">
@@ -152,6 +184,67 @@ export function MoodTracker() {
           />
         </div>
       )}
+
+      {/* Mood History Section */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold text-foreground mb-2">
+          Mood History
+        </h2>
+        <p className="text-sm text-muted-foreground mb-6">
+          Review your past mood entries and patterns
+        </p>
+        
+        {moodHistory.length === 0 ? (
+          <div className="text-center py-12 bg-white rounded-2xl border border-border">
+            <div className="text-4xl mb-4">📊</div>
+            <h3 className="text-lg font-medium text-foreground mb-2">No mood entries yet</h3>
+            <p className="text-sm text-muted-foreground">Start tracking your mood to see patterns and insights</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {moodHistory.slice(0, 10).map((entry) => (
+              <div key={entry.id} className="bg-white rounded-2xl border border-border p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="text-2xl">{getMoodEmoji(entry.mood)}</div>
+                    <div>
+                      <h3 className="font-medium text-foreground">{getMoodLabel(entry.mood)}</h3>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Calendar className="w-3 h-3" />
+                        <span>{entry.date}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {entry.reasons.length > 0 && (
+                  <div className="mb-3">
+                    <div className="flex flex-wrap gap-2">
+                      {entry.reasons.map((reason, index) => (
+                        <span key={index} className="px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded-full">
+                          {reason}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {entry.notes && (
+                  <div className="text-sm text-muted-foreground bg-accent/50 rounded-lg p-3">
+                    "{entry.notes}"
+                  </div>
+                )}
+              </div>
+            ))}
+            
+            {moodHistory.length > 10 && (
+              <div className="text-center text-sm text-muted-foreground">
+                Showing latest 10 entries out of {moodHistory.length} total
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Primary Action Button */}
       {selectedMood && (

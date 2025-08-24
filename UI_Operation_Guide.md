@@ -1,7 +1,7 @@
-# Glow Mom Guide - UI Operation Guide
+# BumpDaily - UI Operation Guide
 
 ## Overview
-Glow Mom Guide is a comprehensive pregnancy wellness application built with React, TypeScript, and modern web technologies. It provides expectant mothers with tools to track mood, sleep, tasks, and connect with a supportive community.
+BumpDaily is a comprehensive pregnancy wellness application built with React, TypeScript, and modern web technologies. It provides expectant mothers with tools to track mood, sleep, tasks, and connect with a supportive community.
 
 ## Application Architecture
 
@@ -251,4 +251,4 @@ src/
 └── ui/              # shadcn/ui components
 ```
 
-This comprehensive UI operation guide provides developers and stakeholders with a complete understanding of how the Glow Mom Guide application functions, its architecture, and interaction patterns.
+This comprehensive UI operation guide provides developers and stakeholders with a complete understanding of how the BumpDaily application functions, its architecture, and interaction patterns.

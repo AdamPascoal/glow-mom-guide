@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Heart, Moon, CheckSquare, Plus, ListTodo, Calendar, Pill, FileText, Bell, BarChart3, ChevronLeft, ChevronRight } from "lucide-react";
+import { Heart, Moon, CheckSquare, Plus, ListTodo, Calendar, Pill, FileText, Bell, BarChart3, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { MoodTracker } from "@/components/MoodTracker";
 import { SleepTracker } from "@/components/SleepTracker";
@@ -173,8 +173,21 @@ const CustomScatterShape = (props: any) => {
 export default function Trackers() {
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
+  const [upcomingAppointments, setUpcomingAppointments] = useState<any[]>([]);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+
+  // Load upcoming appointments from localStorage
+  useEffect(() => {
+    const savedTasks = JSON.parse(localStorage.getItem('wellness-tasks') || '[]');
+    const doctorAppointments = savedTasks.filter((task: any) => task.type === 'doctor-appointment');
+    const now = new Date();
+    const upcoming = doctorAppointments
+      .filter((apt: any) => new Date(apt.date) >= now)
+      .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .slice(0, 3); // Show only next 3 appointments
+    setUpcomingAppointments(upcoming);
+  }, []);
 
   const handleModuleClick = (module: typeof taskModules[0]) => {
     setSelectedModule(module.id);
@@ -234,13 +247,99 @@ export default function Trackers() {
               <div className="space-y-6">
                 <div className="text-center md:text-left">
                   <h2 className="text-xl font-semibold text-card-foreground mb-2">
-                    📊 Wellness Overview
+                     Wellness Overview
                   </h2>
                   <p className="text-sm text-muted-foreground">
                     Get insights into your pregnancy journey and wellness patterns
                   </p>
                 </div>
                 <DueDateEstimator dueDateString="2026-04-10" />
+                
+                {/* Upcoming Appointments */}
+                <Card className="px-6 pt-6 pb-3 bg-transparent border-red-200">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-red-600" />
+                      Upcoming Appointments
+                    </h3>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => navigate('/add-task/doctor-appointment')}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-100 h-8 px-3 text-sm"
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Add
+                    </Button>
+                  </div>
+                  
+                  {upcomingAppointments.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Calendar className="w-12 h-12 mx-auto mb-3 text-red-300" />
+                      <p className="text-base text-gray-600 mb-2">No upcoming appointments</p>
+                      <p className="text-sm text-gray-500">Schedule your next medical appointment</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {upcomingAppointments.map((appointment) => (
+                        <div key={appointment.id} className="p-4 bg-white/60 rounded-lg border border-red-200">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-3 mb-2">
+                                <h4 className="font-medium text-gray-800 text-base">{appointment.data.doctorName}</h4>
+                                <span className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full whitespace-nowrap">
+                                  {appointment.data.specialty}
+                                </span>
+                              </div>
+                              
+                              <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="w-4 h-4" />
+                                  <span>{new Date(appointment.date).toLocaleDateString()}</span>
+                                </div>
+                                {appointment.time && (
+                                  <div className="flex items-center gap-1">
+                                    <Clock className="w-4 h-4" />
+                                    <span>{appointment.time}</span>
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {appointment.data.appointmentTypes?.length > 0 && (
+                                <div className="flex flex-wrap gap-1">
+                                  {appointment.data.appointmentTypes.slice(0, 3).map((type: string, index: number) => (
+                                    <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
+                                      {type}
+                                    </span>
+                                  ))}
+                                  {appointment.data.appointmentTypes.length > 3 && (
+                                    <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
+                                      +{appointment.data.appointmentTypes.length - 3} more
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {upcomingAppointments.length > 0 && (
+                        <div className="text-center -mb-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate('/add-task/doctor-appointment')}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-100 text-xs h-5 px-1 py-0.5"
+                          >
+                            View All Appointments
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </Card>
+                
                 <div className={`bg-white rounded-2xl shadow-sm ${isMobile ? 'p-4' : 'p-6'}`}>
                   <div className="flex justify-between items-center mb-1">
                     <h3 className="font-bold text-gray-800 text-lg">Weekly Sleep & Mood</h3>
@@ -271,7 +370,7 @@ export default function Trackers() {
               <div className="space-y-4">
                 <div className="text-center md:text-left">
                   <h2 className="text-xl font-semibold text-card-foreground mb-2">
-                    🧠 Mood Tracker
+                     Mood Tracker
                   </h2>
                   <p className="text-sm text-muted-foreground">
                     Track your emotional wellness with evidence-based insights
@@ -285,7 +384,7 @@ export default function Trackers() {
               <div className="space-y-4">
                 <div className="text-center md:text-left">
                   <h2 className="text-xl font-semibold text-card-foreground mb-2">
-                    🛌 Sleep Tracker
+                     Sleep Tracker
                   </h2>
                   <p className="text-sm text-muted-foreground">
                     Monitor your rest patterns for optimal pregnancy health
@@ -299,7 +398,7 @@ export default function Trackers() {
               <div className="space-y-6">
                 <div className="text-center md:text-left">
                   <h2 className="text-xl font-semibold text-card-foreground mb-2">
-                    ✨ Wellness Trackers
+                     Wellness Trackers
                   </h2>
                   <p className="text-sm text-muted-foreground">
                     Choose from our specialized tracking modules designed for pregnancy and motherhood wellness
@@ -349,63 +448,13 @@ export default function Trackers() {
                   })}
                 </div>
 
-                {/* Add Task Button */}
-                <div className="text-center pt-4">
-                  <Button onClick={() => navigate("/add-task")} size="lg" className="animate-fade-in">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Task
-                  </Button>
-                </div>
 
-                {/* Daily Wellness Tasks */}
-                <div className="space-y-4 pt-6 border-t border-border">
-                  <div className="text-center md:text-left">
-                    <h3 className="text-lg font-semibold text-card-foreground mb-2">
-                      📋 Daily Wellness Tasks
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      Complete evidence-based activities for pregnancy health
-                    </p>
-                  </div>
-                  <TaskTracker />
-                </div>
                 
-                {/* My Tasks Button */}
-                <div className="text-center pt-4">
-                  <Button onClick={() => navigate("/my-tasks")} variant="outline" size="lg">
-                    <ListTodo className="w-4 h-4 mr-2" />
-                    My Tasks
-                  </Button>
-                </div>
               </div>
             </TabsContent>
           </div>
         </Tabs>
 
-        {/* Tips Section */}
-        <div className="mt-8 bg-gradient-wellness/5 border border-primary/20 rounded-2xl p-6">
-          <h3 className="font-semibold text-card-foreground mb-3">
-            💡 Tracking Tips
-          </h3>
-          <ul className="space-y-2 text-sm text-muted-foreground">
-            <li className="flex items-start gap-2">
-              <span className="text-primary">•</span>
-              Track consistently for the most accurate insights and medical benefits
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-primary">•</span>
-              All feedback is based on current pregnancy research and clinical guidelines
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-primary">•</span>
-              Use notes in mood tracking to identify patterns and triggers
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-primary">•</span>
-              Left-side sleeping and 7-9 hours are optimal for fetal development
-            </li>
-          </ul>
-        </div>
       </div>
     </div>
   );

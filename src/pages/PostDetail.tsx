@@ -189,7 +189,15 @@ const PostDetail = () => {
         
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className="font-medium text-gray-900 text-sm">{comment.username}</span>
+            <span 
+              className="font-medium text-gray-900 text-sm hover:text-blue-600 cursor-pointer transition-colors"
+              onClick={() => {
+                const userSlug = comment.username.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                navigate(`/user/${userSlug}`);
+              }}
+            >
+              {comment.username}
+            </span>
             <span className="text-gray-500 text-xs">{comment.timestamp}</span>
             <Button variant="ghost" size="sm" className="p-1 ml-auto">
               <MoreHorizontal className="w-4 h-4" />
@@ -284,7 +292,15 @@ const PostDetail = () => {
             <div className="flex-1">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="font-medium text-gray-900 text-sm">{post.username}</span>
+                  <span 
+                    className="font-medium text-gray-900 text-sm hover:text-blue-600 cursor-pointer transition-colors"
+                    onClick={() => {
+                      const userSlug = post.username.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                      navigate(`/user/${userSlug}`);
+                    }}
+                  >
+                    {post.username}
+                  </span>
                   <p className="text-gray-500 text-xs">{post.timestamp}</p>
                 </div>
                 <Button variant="ghost" size="sm" className="p-1">

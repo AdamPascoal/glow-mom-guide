@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Glow Mom Guide** (also known as BumpDaily) is a pregnancy wellness application built with React, TypeScript, and Vite. It provides expectant mothers with community support, wellness tracking, and task management features.
+**BumpDaily** is a pregnancy wellness application built with React, TypeScript, and Vite. It provides expectant mothers with community support, wellness tracking, and task management features.
 
 ## Development Commands
 

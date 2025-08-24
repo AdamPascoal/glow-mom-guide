@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +41,9 @@ export default function DoctorAppointmentForm() {
   const navigate = useNavigate();
   const { toast } = useToast();
   
+  const [activeTab, setActiveTab] = useState<'schedule' | 'upcoming' | 'past'>('schedule');
+  const [appointments, setAppointments] = useState<any[]>([]);
+  
   const [formData, setFormData] = useState({
     doctorName: "",
     specialty: "",
@@ -55,6 +58,13 @@ export default function DoctorAppointmentForm() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Load appointments from localStorage on component mount
+  useEffect(() => {
+    const savedTasks = JSON.parse(localStorage.getItem('wellness-tasks') || '[]');
+    const doctorAppointments = savedTasks.filter((task: any) => task.type === 'doctor-appointment');
+    setAppointments(doctorAppointments);
+  }, []);
+
   const handleTypeToggle = (type: string) => {
     setFormData(prev => ({
       ...prev,
@@ -62,6 +72,17 @@ export default function DoctorAppointmentForm() {
         ? prev.appointmentTypes.filter(t => t !== type)
         : [...prev.appointmentTypes, type]
     }));
+  };
+
+  // Filter appointments by date
+  const getUpcomingAppointments = () => {
+    const now = new Date();
+    return appointments.filter(apt => new Date(apt.date) >= now);
+  };
+
+  const getPastAppointments = () => {
+    const now = new Date();
+    return appointments.filter(apt => new Date(apt.date) < now);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -100,13 +121,28 @@ export default function DoctorAppointmentForm() {
       existingTasks.push(task);
       localStorage.setItem('wellness-tasks', JSON.stringify(existingTasks));
 
+      // Update local appointments state
+      setAppointments(prev => [...prev, task]);
+
       toast({
         title: "Appointment scheduled! 📅",
         description: `Your appointment with ${formData.doctorName} has been added to your tasks`,
         duration: 5000,
       });
 
-      navigate('/my-tasks');
+      // Reset form and switch to upcoming tab
+      setFormData({
+        doctorName: "",
+        specialty: "",
+        date: undefined,
+        time: "",
+        appointmentTypes: [],
+        otherType: "",
+        notes: "",
+        location: "",
+        phoneNumber: ""
+      });
+      setActiveTab('upcoming');
     } catch (error) {
       toast({
         title: "Error saving appointment",
@@ -133,8 +169,8 @@ export default function DoctorAppointmentForm() {
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="text-center">
-              <h1 className="text-xl font-semibold text-gray-800">Doctor Appointment</h1>
-              <p className="text-sm text-gray-600">Schedule your medical appointment</p>
+              <h1 className="text-xl font-semibold text-gray-800">Doctor Appointments</h1>
+              <p className="text-sm text-gray-600">Manage your medical appointments</p>
             </div>
             <div className="w-10" />
           </div>
@@ -142,6 +178,47 @@ export default function DoctorAppointmentForm() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 md:px-6 py-6">
+        {/* Tab Navigation */}
+        <div className="flex bg-white/80 backdrop-blur-sm rounded-lg p-1 mb-6 border border-red-200">
+          <button
+            type="button"
+            onClick={() => setActiveTab('schedule')}
+            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all duration-200 ${
+              activeTab === 'schedule'
+                ? 'bg-red-600 text-white shadow-sm'
+                : 'text-gray-600 hover:text-red-600'
+            }`}
+          >
+            <Plus className="w-4 h-4 inline mr-2" />
+            Schedule New
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('upcoming')}
+            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all duration-200 ${
+              activeTab === 'upcoming'
+                ? 'bg-red-600 text-white shadow-sm'
+                : 'text-gray-600 hover:text-red-600'
+            }`}
+          >
+            <CalendarIcon className="w-4 h-4 inline mr-2" />
+            Upcoming ({getUpcomingAppointments().length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('past')}
+            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all duration-200 ${
+              activeTab === 'past'
+                ? 'bg-red-600 text-white shadow-sm'
+                : 'text-gray-600 hover:text-red-600'
+            }`}
+          >
+            <Clock className="w-4 h-4 inline mr-2" />
+            Past ({getPastAppointments().length})
+          </button>
+        </div>
+
+        {activeTab === 'schedule' ? (
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Basic Information */}
           <Card className="p-6 border-red-200 bg-white/80 backdrop-blur-sm">
@@ -321,6 +398,147 @@ export default function DoctorAppointmentForm() {
             </Button>
           </div>
         </form>
+        ) : activeTab === 'upcoming' ? (
+        /* Upcoming Appointments */
+        <div className="space-y-4">
+          {getUpcomingAppointments().length === 0 ? (
+            <Card className="p-8 border-red-200 bg-white/80 backdrop-blur-sm text-center">
+              <CalendarIcon className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+              <h3 className="text-lg font-medium text-gray-800 mb-1">No upcoming appointments</h3>
+              <p className="text-sm text-gray-600 mb-4">Schedule your next medical appointment</p>
+              <Button
+                onClick={() => setActiveTab('schedule')}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Schedule Appointment
+              </Button>
+            </Card>
+          ) : (
+            getUpcomingAppointments()
+              .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+              .map((appointment) => (
+                <Card key={appointment.id} className="p-6 border-red-200 bg-white/80 backdrop-blur-sm">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-lg font-semibold text-gray-800">{appointment.data.doctorName}</h3>
+                        <span className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full">
+                          {appointment.data.specialty}
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                        <div className="flex items-center gap-1">
+                          <CalendarIcon className="w-4 h-4" />
+                          <span>{new Date(appointment.date).toLocaleDateString()}</span>
+                        </div>
+                        {appointment.time && (
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-4 h-4" />
+                            <span>{appointment.time}</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {appointment.data.appointmentTypes?.length > 0 && (
+                        <div className="mb-3">
+                          <div className="flex flex-wrap gap-1">
+                            {appointment.data.appointmentTypes.map((type: string, index: number) => (
+                              <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
+                                {type}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {appointment.data.location && (
+                        <p className="text-sm text-gray-600 mb-2">
+                          <strong>Location:</strong> {appointment.data.location}
+                        </p>
+                      )}
+                      
+                      {appointment.data.notes && (
+                        <p className="text-sm text-gray-600">
+                          <strong>Notes:</strong> {appointment.data.notes}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              ))
+          )}
+        </div>
+        ) : (
+        /* Past Appointments */
+        <div className="space-y-4">
+          {getPastAppointments().length === 0 ? (
+            <Card className="p-8 border-red-200 bg-white/80 backdrop-blur-sm text-center">
+              <Clock className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+              <h3 className="text-lg font-medium text-gray-800 mb-1">No past appointments</h3>
+              <p className="text-sm text-gray-600">Your appointment history will appear here</p>
+            </Card>
+          ) : (
+            getPastAppointments()
+              .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+              .map((appointment) => (
+                <Card key={appointment.id} className="p-6 border-red-200 bg-white/80 backdrop-blur-sm opacity-75">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-lg font-semibold text-gray-800">{appointment.data.doctorName}</h3>
+                        <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                          {appointment.data.specialty}
+                        </span>
+                        <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
+                          Completed
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                        <div className="flex items-center gap-1">
+                          <CalendarIcon className="w-4 h-4" />
+                          <span>{new Date(appointment.date).toLocaleDateString()}</span>
+                        </div>
+                        {appointment.time && (
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-4 h-4" />
+                            <span>{appointment.time}</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {appointment.data.appointmentTypes?.length > 0 && (
+                        <div className="mb-3">
+                          <div className="flex flex-wrap gap-1">
+                            {appointment.data.appointmentTypes.map((type: string, index: number) => (
+                              <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
+                                {type}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {appointment.data.location && (
+                        <p className="text-sm text-gray-600 mb-2">
+                          <strong>Location:</strong> {appointment.data.location}
+                        </p>
+                      )}
+                      
+                      {appointment.data.notes && (
+                        <p className="text-sm text-gray-600">
+                          <strong>Notes:</strong> {appointment.data.notes}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              ))
+          )}
+        </div>
+        )}
       </div>
     </div>
   );

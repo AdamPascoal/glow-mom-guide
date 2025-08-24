@@ -58,6 +58,15 @@ const mockPosts: Post[] = [
   },
 ];
 
+// Mock users for search
+const mockUsers = [
+  { username: 'Nurturing Nest', slug: 'nurturing-nest', bio: 'First-time mom-to-be 💕' },
+  { username: 'Mama Bear Club', slug: 'mama-bear-club', bio: 'Second pregnancy, still learning every day! 🐻' },
+  { username: 'Jessica L.', slug: 'jessica-l', bio: 'Expecting baby #1 in December! 👶' },
+  { username: 'Sarah M.', slug: 'sarah-m', bio: 'Third trimester mama sharing tips' },
+  { username: 'Emma Rose', slug: 'emma-rose', bio: 'New mom navigating postpartum' },
+];
+
 const tags = [
   'General Pregnancy',
   'Trimester 1 Support', 
@@ -138,6 +147,11 @@ const CommunityFeed = () => {
     tag.toLowerCase().includes(searchQuery.toLowerCase()) && searchQuery.length > 0
   );
 
+  // Check if search query matches any users
+  const matchingUsers = mockUsers.filter(user =>
+    user.username.toLowerCase().includes(searchQuery.toLowerCase()) && searchQuery.length > 0
+  ).slice(0, 3); // Limit to 3 results
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -172,19 +186,42 @@ const CommunityFeed = () => {
                 className="pl-10 rounded-full bg-muted/50"
                 autoFocus
               />
-              {/* Community Search Suggestion */}
-              {matchingCommunity && searchQuery.length > 0 && searchQuery !== 'search' && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-border rounded-lg shadow-lg z-20">
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start p-3 h-auto"
-                    onClick={() => navigateToCommunity(matchingCommunity)}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Search className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm">Go to <strong>{matchingCommunity}</strong> community</span>
-                    </div>
-                  </Button>
+              {/* Search Suggestions */}
+              {(matchingCommunity || matchingUsers.length > 0) && searchQuery.length > 0 && searchQuery !== 'search' && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-border rounded-lg shadow-lg z-20 max-h-64 overflow-y-auto">
+                  {/* Community Suggestion */}
+                  {matchingCommunity && (
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start p-3 h-auto border-b border-border"
+                      onClick={() => navigateToCommunity(matchingCommunity)}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Search className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm">Go to <strong>{matchingCommunity}</strong> community</span>
+                      </div>
+                    </Button>
+                  )}
+                  
+                  {/* User Suggestions */}
+                  {matchingUsers.map((user) => (
+                    <Button
+                      key={user.slug}
+                      variant="ghost"
+                      className="w-full justify-start p-3 h-auto"
+                      onClick={() => navigate(`/user/${user.slug}`)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-pink-200 flex items-center justify-center text-pink-600 font-medium text-sm">
+                          {user.username.charAt(0)}
+                        </div>
+                        <div className="text-left">
+                          <div className="text-sm font-medium">{user.username}</div>
+                          <div className="text-xs text-muted-foreground">{user.bio}</div>
+                        </div>
+                      </div>
+                    </Button>
+                  ))}
                 </div>
               )}
             </div>
@@ -242,7 +279,16 @@ const CommunityFeed = () => {
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-gray-600 text-sm">{post.username}</span>
+                    <span 
+                      className="text-gray-600 text-sm hover:text-blue-600 cursor-pointer transition-colors font-medium"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const userSlug = post.username.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                        navigate(`/user/${userSlug}`);
+                      }}
+                    >
+                      {post.username}
+                    </span>
                     <span className="text-gray-400 text-xs">•</span>
                     <span className="text-gray-500 text-xs">{post.timestamp}</span>
                   </div>

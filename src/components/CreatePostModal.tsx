@@ -65,22 +65,22 @@ export function CreatePostModal({ isOpen, onClose, onSubmit, defaultTag }: Creat
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-center">Create New Post</DialogTitle>
+      <DialogContent className="sm:max-w-lg bg-white/70 backdrop-blur-md border-0 shadow-xl">
+        <DialogHeader className="pb-4">
+          <DialogTitle className="text-xl font-semibold text-center text-gray-800">Create New Post</DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-6 py-4">
+        <div className="space-y-5">
           {/* Community Selection */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Select Community</label>
+            <label className="text-sm font-medium text-gray-600">Select Community</label>
             <Select value={selectedTag} onValueChange={setSelectedTag}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full bg-white/60 border-gray-200 focus:border-pink-300 focus:ring-pink-200">
                 <SelectValue placeholder="Choose a community..." />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white/80 backdrop-blur-md">
                 {communityOptions.map((option) => (
-                  <SelectItem key={option} value={option}>
+                  <SelectItem key={option} value={option} className="hover:bg-pink-50">
                     {option}
                   </SelectItem>
                 ))}
@@ -90,18 +90,18 @@ export function CreatePostModal({ isOpen, onClose, onSubmit, defaultTag }: Creat
 
           {/* Post Content */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Share your thoughts</label>
+            <label className="text-sm font-medium text-gray-600">Share your thoughts</label>
             <Textarea
               placeholder="Share your thoughts, questions, or tips..."
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="min-h-[120px] resize-none"
+              className="min-h-[120px] resize-none bg-white/60 border-gray-200 focus:border-pink-300 focus:ring-pink-200"
             />
           </div>
 
           {/* Image Upload */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Attach Photo (Optional)</label>
+            <label className="text-sm font-medium text-gray-600">Attach Photo (Optional)</label>
             <div className="flex items-center gap-4">
               <input
                 type="file"
@@ -112,21 +112,21 @@ export function CreatePostModal({ isOpen, onClose, onSubmit, defaultTag }: Creat
               />
               <label
                 htmlFor="image-upload"
-                className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-white/60 border border-gray-200 rounded-lg cursor-pointer hover:bg-pink-50 transition-colors"
               >
-                <Camera className="w-4 h-4" />
-                <span className="text-sm">Choose Photo</span>
+                <Camera className="w-4 h-4 text-gray-600" />
+                <span className="text-sm text-gray-600">Choose Photo</span>
               </label>
               {image && (
                 <div className="relative">
                   <img
                     src={image}
                     alt="Preview"
-                    className="w-20 h-20 object-cover rounded-lg"
+                    className="w-20 h-20 object-cover rounded-lg border border-gray-200"
                   />
                   <button
                     onClick={() => setImage(undefined)}
-                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600"
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 shadow-sm"
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -137,14 +137,18 @@ export function CreatePostModal({ isOpen, onClose, onSubmit, defaultTag }: Creat
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-3 pt-4 border-t">
-          <Button variant="outline" onClick={onClose} className="flex-1">
+        <div className="flex gap-3 pt-6">
+          <Button 
+            variant="outline" 
+            onClick={onClose} 
+            className="flex-1 bg-white/60 border-gray-200 hover:bg-gray-50 text-gray-700"
+          >
             Cancel
           </Button>
           <Button 
             onClick={handleSubmit}
             disabled={!selectedTag || !content.trim()}
-            className="flex-1 bg-pink-500 hover:bg-pink-600 text-white"
+            className="flex-1 bg-pink-500 hover:bg-pink-600 text-white shadow-sm disabled:opacity-50"
           >
             Post
           </Button>
