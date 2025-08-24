@@ -2,11 +2,8 @@ import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Heart, Moon, CheckSquare, Plus, ListTodo, Calendar, Pill, FileText, Bell, BarChart3, ChevronLeft, ChevronRight, Clock } from "lucide-react";
+import { Heart, Moon, CheckSquare, Plus, Calendar, Pill, FileText, Bell, BarChart3, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { MoodTracker } from "@/components/MoodTracker";
-import { SleepTracker } from "@/components/SleepTracker";
-import { TaskTracker } from "@/components/TaskTracker";
 import { Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ComposedChart, Scatter } from "recharts";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMotherhoodStage } from "@/contexts/MotherhoodStageContext";
@@ -249,31 +246,13 @@ export default function Trackers() {
                 <span className="hidden sm:inline">Overview</span>
               </TabsTrigger>
             )}
-            {visibleTabs.includes('mood') && (
-              <TabsTrigger 
-                value="mood" 
-                className="flex items-center gap-2 py-3 data-[state=active]:bg-mood-card data-[state=active]:text-primary"
-              >
-                <Heart className="w-4 h-4" />
-                <span className="hidden sm:inline">Mood</span>
-              </TabsTrigger>
-            )}
-            {visibleTabs.includes('sleep') && (
-              <TabsTrigger 
-                value="sleep"
-                className="flex items-center gap-2 py-3 data-[state=active]:bg-sleep-muted data-[state=active]:text-sleep-primary"
-              >
-                <Moon className="w-4 h-4" />
-                <span className="hidden sm:inline">Sleep</span>
-              </TabsTrigger>
-            )}
             {visibleTabs.includes('tasks') && (
               <TabsTrigger 
                 value="tasks"
                 className="flex items-center gap-2 py-3 data-[state=active]:bg-task-card data-[state=active]:text-task-primary"
               >
                 <CheckSquare className="w-4 h-4" />
-                <span className="hidden sm:inline">Tasks</span>
+                <span className="hidden sm:inline">Trackers</span>
               </TabsTrigger>
             )}
           </TabsList>
@@ -405,33 +384,6 @@ export default function Trackers() {
               </div>
             </TabsContent>
 
-            <TabsContent value="mood" className="mt-0">
-              <div className="space-y-4">
-                <div className="text-center md:text-left">
-                  <h2 className="text-xl font-semibold text-card-foreground mb-2">
-                     Mood Tracker
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    Track your emotional wellness with evidence-based insights
-                  </p>
-                </div>
-                <MoodTracker />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="sleep" className="mt-0">
-              <div className="space-y-4">
-                <div className="text-center md:text-left">
-                  <h2 className="text-xl font-semibold text-card-foreground mb-2">
-                     Sleep Tracker
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    Monitor your rest patterns for optimal pregnancy health
-                  </p>
-                </div>
-                <SleepTracker />
-              </div>
-            </TabsContent>
 
             <TabsContent value="tasks" className="mt-0">
               <div className="space-y-6">

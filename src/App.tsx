@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { MotherhoodStageProvider } from "./contexts/MotherhoodStageContext";
 import Home from "./pages/Home";
 import Trackers from "./pages/Trackers";
@@ -14,15 +14,44 @@ import UserProfile from "./pages/UserProfile";
 import NotFound from "./pages/NotFound";
 import AddTask from "./pages/AddTask";
 import MyTasks from "./pages/MyTasks";
-import DoctorAppointmentForm from "./pages/DoctorAppointmentForm";
-import VitaminSupplementForm from "./pages/VitaminSupplementForm";
-import MedicalTestForm from "./pages/MedicalTestForm";
-import PersonalReminderForm from "./pages/PersonalReminderForm";
+import DoctorAppointmentForm from "./components/forms/DoctorAppointmentForm";
+import VitaminSupplementForm from "./components/forms/VitaminSupplementForm";
+import MedicalTestForm from "./components/forms/MedicalTestForm";
+import PersonalReminderForm from "./components/forms/PersonalReminderForm";
 import MoodTrackerForm from "./pages/MoodTrackerForm";
 import SleepTrackerForm from "./pages/SleepTrackerForm";
-import { MobileNavigation, DesktopNavigation } from "./components/Navigation";
+import { MobileNavigation, DesktopNavigation } from "./components/layout/Navigation";
 
 const queryClient = new QueryClient();
+
+function AppLayout() {
+  return (
+    <div className="min-h-screen bg-background">
+      <DesktopNavigation />
+      <main className="pb-20 md:pb-0">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/community/:communityName" element={<Community />} />
+          <Route path="/post/:postId" element={<PostDetail />} />
+          <Route path="/user/:username" element={<UserProfile />} />
+          <Route path="/trackers" element={<Trackers />} />
+          <Route path="/add-task" element={<AddTask />} />
+          <Route path="/my-tasks" element={<MyTasks />} />
+          <Route path="/add-task/mood-tracker" element={<MoodTrackerForm />} />
+          <Route path="/add-task/sleep-tracker" element={<SleepTrackerForm />} />
+          <Route path="/add-task/doctor-appointment" element={<DoctorAppointmentForm />} />
+          <Route path="/add-task/vitamin-supplement" element={<VitaminSupplementForm />} />
+          <Route path="/add-task/medical-test" element={<MedicalTestForm />} />
+          <Route path="/add-task/personal-reminder" element={<PersonalReminderForm />} />
+          <Route path="/library" element={<Library />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </main>
+      <MobileNavigation />
+    </div>
+  );
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -31,30 +60,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <div className="min-h-screen bg-background">
-            <DesktopNavigation />
-            <main className="pb-20 md:pb-0">
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/community/:communityName" element={<Community />} />
-                <Route path="/post/:postId" element={<PostDetail />} />
-                <Route path="/user/:username" element={<UserProfile />} />
-                <Route path="/trackers" element={<Trackers />} />
-                <Route path="/add-task" element={<AddTask />} />
-                <Route path="/my-tasks" element={<MyTasks />} />
-                <Route path="/add-task/mood-tracker" element={<MoodTrackerForm />} />
-                <Route path="/add-task/sleep-tracker" element={<SleepTrackerForm />} />
-                <Route path="/add-task/doctor-appointment" element={<DoctorAppointmentForm />} />
-                <Route path="/add-task/vitamin-supplement" element={<VitaminSupplementForm />} />
-                <Route path="/add-task/medical-test" element={<MedicalTestForm />} />
-                <Route path="/add-task/personal-reminder" element={<PersonalReminderForm />} />
-                <Route path="/library" element={<Library />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </main>
-            <MobileNavigation />
-          </div>
+          <AppLayout />
         </BrowserRouter>
       </MotherhoodStageProvider>
     </TooltipProvider>

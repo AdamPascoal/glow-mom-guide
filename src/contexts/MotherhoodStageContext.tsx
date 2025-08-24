@@ -15,19 +15,16 @@ const TRACKER_VISIBILITY = {
   'Trying to Conceive': {
     tabs: ['overview', 'tasks'],
     taskModules: ['mood-tracker', 'sleep-tracker', 'vitamin-supplement'],
-    overview: true,
     pregnancyJourney: false
   },
   'Incubator Stage': {
     tabs: ['overview', 'tasks'],
     taskModules: ['mood-tracker', 'sleep-tracker', 'doctor-appointment', 'vitamin-supplement', 'medical-test', 'personal-reminder'],
-    overview: true,
     pregnancyJourney: true
   },
   'Veteran Stage': {
     tabs: ['overview', 'tasks'],
     taskModules: ['mood-tracker', 'sleep-tracker', 'doctor-appointment', 'vitamin-supplement', 'personal-reminder'],
-    overview: true,
     pregnancyJourney: false
   }
 };
@@ -54,15 +51,11 @@ export function MotherhoodStageProvider({ children }: { children: ReactNode }) {
   const isTrackerVisible = (trackerId: string) => {
     const config = TRACKER_VISIBILITY[currentStage];
     
-    if (trackerId === 'overview') {
-      return config.overview;
-    }
-    
     if (trackerId === 'pregnancy-journey') {
       return config.pregnancyJourney;
     }
     
-    if (['tasks'].includes(trackerId)) {
+    if (trackerId === 'tasks') {
       return config.tabs.includes(trackerId);
     }
     

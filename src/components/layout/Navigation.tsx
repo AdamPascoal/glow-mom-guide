@@ -1,4 +1,4 @@
-import { Home, Activity, BookOpen, User } from "lucide-react";
+import { Home, Activity, BookOpen, User, Search, Bell } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -36,35 +36,42 @@ export function MobileNavigation() {
 
 export function DesktopNavigation() {
   return (
-    <header className="hidden md:flex bg-card border-b border-border px-6 py-4">
-      <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
-        <div className="flex items-center space-x-8">
-          <h1 className="text-xl font-semibold bg-gradient-wellness bg-clip-text text-transparent">
-            Pregnancy Wellness
+    <header className="hidden md:flex bg-white border-b border-gray-200 px-6 py-3">
+      <div className="max-w-7xl mx-auto w-full">
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-2xl font-bold text-pink-400">
+            BumpDaily
           </h1>
-          <nav className="flex space-x-6">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={({ isActive }) =>
-                  cn(
-                    "flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                    isActive
-                      ? "text-primary bg-secondary"
-                      : "text-muted-foreground hover:text-primary hover:bg-secondary/50"
-                  )
-                }
-              >
-                <item.icon className="h-4 w-4" />
-                <span>{item.label}</span>
-              </NavLink>
-            ))}
-          </nav>
+          <div className="flex items-center space-x-4">
+            <button className="p-2 rounded-full hover:bg-gray-100 transition-colors">
+              <Search className="h-5 w-5 text-gray-600" />
+            </button>
+            <button className="p-2 rounded-full hover:bg-gray-100 transition-colors">
+              <Bell className="h-5 w-5 text-gray-600" />
+            </button>
+          </div>
         </div>
-        <div className="text-sm text-muted-foreground">
-          Good morning! ✨
-        </div>
+        
+        {/* Navigation */}
+        <nav className="flex items-center space-x-1">
+          {navItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-colors",
+                  isActive
+                    ? "text-white bg-pink-400"
+                    : "text-gray-600 hover:text-pink-400 hover:bg-pink-50"
+                )
+              }
+            >
+              <item.icon className="h-4 w-4" />
+              <span>{item.label}</span>
+            </NavLink>
+          ))}
+        </nav>
       </div>
     </header>
   );

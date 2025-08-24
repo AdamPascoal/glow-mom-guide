@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { User, Heart, TrendingUp, Info, FileText, Shield, MessageCircle, Calendar, ThumbsUp } from "lucide-react";
+import { User, Heart, TrendingUp, Info, FileText, Shield, MessageCircle, ThumbsUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMotherhoodStage, type MotherhoodStage } from "@/contexts/MotherhoodStageContext";
 
@@ -89,13 +89,6 @@ export default function Profile() {
 
   const { toast } = useToast();
 
-  const handleSave = () => {
-    toast({
-      title: "Profile updated! ✨",
-      description: "Your preferences have been saved successfully.",
-      duration: 3000,
-    });
-  };
 
   const handleAboutClick = (section: string) => {
     toast({
