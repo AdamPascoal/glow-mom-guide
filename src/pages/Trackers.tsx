@@ -13,6 +13,26 @@ import { useMotherhoodStage } from "@/contexts/MotherhoodStageContext";
 
 const taskModules = [
   {
+    id: "mood-tracker",
+    title: "Mood Tracker",
+    description: "Track your emotional wellness daily",
+    icon: Heart,
+    color: "from-pink-100 to-pink-200",
+    iconColor: "text-pink-600",
+    borderColor: "border-pink-200",
+    route: "/add-task/mood-tracker"
+  },
+  {
+    id: "sleep-tracker",
+    title: "Sleep Tracker",
+    description: "Monitor your rest patterns daily",
+    icon: Moon,
+    color: "from-indigo-100 to-indigo-200",
+    iconColor: "text-indigo-600",
+    borderColor: "border-indigo-200",
+    route: "/add-task/sleep-tracker"
+  },
+  {
     id: "doctor-appointment",
     title: "Doctor Appointment",
     description: "Schedule and track medical appointments",

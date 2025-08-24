@@ -13,20 +13,20 @@ const MotherhoodStageContext = createContext<MotherhoodStageContextType | undefi
 
 const TRACKER_VISIBILITY = {
   'Trying to Conceive': {
-    tabs: ['overview', 'mood', 'sleep', 'tasks'],
-    taskModules: ['vitamin-supplement'],
+    tabs: ['overview', 'tasks'],
+    taskModules: ['mood-tracker', 'sleep-tracker', 'vitamin-supplement'],
     overview: true,
     pregnancyJourney: false
   },
   'Incubator Stage': {
-    tabs: ['overview', 'mood', 'sleep', 'tasks'],
-    taskModules: ['doctor-appointment', 'vitamin-supplement', 'medical-test', 'personal-reminder'],
+    tabs: ['overview', 'tasks'],
+    taskModules: ['mood-tracker', 'sleep-tracker', 'doctor-appointment', 'vitamin-supplement', 'medical-test', 'personal-reminder'],
     overview: true,
     pregnancyJourney: true
   },
   'Veteran Stage': {
-    tabs: ['overview', 'mood', 'sleep', 'tasks'],
-    taskModules: ['doctor-appointment', 'vitamin-supplement', 'personal-reminder'],
+    tabs: ['overview', 'tasks'],
+    taskModules: ['mood-tracker', 'sleep-tracker', 'doctor-appointment', 'vitamin-supplement', 'personal-reminder'],
     overview: true,
     pregnancyJourney: false
   }
@@ -62,7 +62,7 @@ export function MotherhoodStageProvider({ children }: { children: ReactNode }) {
       return config.pregnancyJourney;
     }
     
-    if (['mood', 'sleep', 'tasks'].includes(trackerId)) {
+    if (['tasks'].includes(trackerId)) {
       return config.tabs.includes(trackerId);
     }
     
