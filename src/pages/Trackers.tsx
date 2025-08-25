@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Heart, Moon, CheckSquare, Plus, Calendar, Pill, FileText, Bell, BarChart3, ChevronLeft, ChevronRight, Clock, AlertTriangle } from "lucide-react";
+import { Heart, Moon, CheckSquare, Plus, Calendar, Pill, FileText, Bell, BarChart3, ChevronLeft, ChevronRight, Clock, AlertTriangle, Activity } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ComposedChart, Scatter } from "recharts";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -83,13 +83,69 @@ const taskModules = [
 
 // Mock data for wellness chart
 const wellnessData = [
-  { date: '2024-01-01', hours: 7.5, mood: 4 },
-  { date: '2024-01-02', hours: 8.2, mood: 5 },
-  { date: '2024-01-03', hours: 6.8, mood: 3 },
-  { date: '2024-01-04', hours: 7.9, mood: 4 },
-  { date: '2024-01-05', hours: 8.5, mood: 5 },
-  { date: '2024-01-06', hours: 7.2, mood: 4 },
-  { date: '2024-01-07', hours: 8.0, mood: 4 },
+  { 
+    date: '2024-01-01', 
+    hours: 7.5, 
+    overallMood: 4,
+    energy: 3,
+    stress: 2,
+    calmness: 4,
+    emotionalStability: 4
+  },
+  { 
+    date: '2024-01-02', 
+    hours: 8.2, 
+    overallMood: 5,
+    energy: 4,
+    stress: 1,
+    calmness: 5,
+    emotionalStability: 5
+  },
+  { 
+    date: '2024-01-03', 
+    hours: 6.8, 
+    overallMood: 3,
+    energy: 2,
+    stress: 4,
+    calmness: 2,
+    emotionalStability: 3
+  },
+  { 
+    date: '2024-01-04', 
+    hours: 7.9, 
+    overallMood: 4,
+    energy: 3,
+    stress: 2,
+    calmness: 4,
+    emotionalStability: 4
+  },
+  { 
+    date: '2024-01-05', 
+    hours: 8.5, 
+    overallMood: 5,
+    energy: 5,
+    stress: 1,
+    calmness: 5,
+    emotionalStability: 5
+  },
+  { 
+    date: '2024-01-06', 
+    hours: 7.2, 
+    overallMood: 4,
+    energy: 3,
+    stress: 3,
+    calmness: 3,
+    emotionalStability: 4
+  },
+  { 
+    date: '2024-01-07', 
+    hours: 8.0, 
+    overallMood: 4,
+    energy: 4,
+    stress: 2,
+    calmness: 4,
+    emotionalStability: 4
+  },
 ];
 
 // Mock symptom data
@@ -188,8 +244,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 const CustomScatterShape = (props: any) => {
   const { cx, cy, payload } = props;
-  const moodEmojis = ['😢', '😕', '😐', '😊', '😄'];
-  const emoji = moodEmojis[payload.mood - 1] || '😐';
+  const moodEmojis = ['😔', '😕', '😐', '🙂', '😄'];
+  const emoji = moodEmojis[payload.overallMood - 1] || '😐';
   
   return (
     <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fontSize="16">
@@ -203,6 +259,7 @@ export default function Trackers() {
   const visibleTabs = getVisibleTrackers();
   const [activeTab, setActiveTab] = useState(visibleTabs[0] || "mood");
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
+  const [selectedMoodMetric, setSelectedMoodMetric] = useState<string>("overallMood");
   const [upcomingAppointments, setUpcomingAppointments] = useState<any[]>([]);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -370,29 +427,144 @@ export default function Trackers() {
                 
                 <div className={`bg-white rounded-2xl shadow-sm ${isMobile ? 'p-4' : 'p-6'}`}>
                   <div className="flex justify-between items-center mb-1">
-                    <h3 className="font-bold text-gray-800 text-lg">Weekly Sleep & Mood</h3>
+                    <h3 className="font-bold text-gray-800 text-lg">Weekly Sleep Pattern</h3>
                     <div className="flex items-center space-x-2">
                       <button className="p-2 rounded-full hover:bg-gray-100"><ChevronLeft size={20} /></button>
                       <span className="text-sm font-medium text-gray-600">This Week</span>
                       <button className="p-2 rounded-full hover:bg-gray-100"><ChevronRight size={20} /></button>
                     </div>
                   </div>
-                  <p className="text-sm text-gray-500 mb-4">See how your sleep and mood are connected.</p>
+                  <p className="text-sm text-gray-500 mb-4">Track your sleep hours throughout the week.</p>
                   <div className="h-80">
                     <ResponsiveContainer width="100%" height="100%">
-                      <ComposedChart data={wellnessData} margin={{ top: 20, right: 20, left: -10, bottom: 5 }}>
+                      <ComposedChart data={wellnessData} margin={{ top: 20, right: 20, left: 20, bottom: 5 }}>
                         <XAxis dataKey="date" tickFormatter={(str) => new Date(str).toLocaleDateString('en-US', { weekday: 'short' })} stroke="#9CA3AF" fontSize={12} />
-                        <YAxis dataKey="hours" stroke="#9CA3AF" fontSize={12} domain={[0, 12]} />
+                        <YAxis dataKey="hours" stroke="#9CA3AF" fontSize={12} domain={[0, 12]} label={{ value: 'Sleep Hours', angle: -90, position: 'insideLeft' }} />
                         <Tooltip content={<CustomTooltip />} />
-                        <Line type="monotone" dataKey="hours" stroke={'#f4a3b8'} strokeWidth={3} dot={false} activeDot={{ r: 8 }} />
-                        <Scatter dataKey="hours" shape={<CustomScatterShape />} />
+                        <Line type="monotone" dataKey="hours" stroke={'#6366f1'} strokeWidth={3} dot={{ fill: '#6366f1', strokeWidth: 2, r: 6 }} activeDot={{ r: 8, fill: '#4f46e5' }} />
                       </ComposedChart>
                     </ResponsiveContainer>
+                  </div>
+                </div>
+                
+                <div className={`bg-white rounded-2xl shadow-sm ${isMobile ? 'p-4' : 'p-6'}`}>
+                  <div className="flex justify-between items-center mb-1">
+                    <h3 className="font-bold text-gray-800 text-lg">Mood Analytics</h3>
+                    <div className="flex items-center space-x-2">
+                      <button className="p-2 rounded-full hover:bg-gray-100"><ChevronLeft size={20} /></button>
+                      <span className="text-sm font-medium text-gray-600">This Week</span>
+                      <button className="p-2 rounded-full hover:bg-gray-100"><ChevronRight size={20} /></button>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-500 mb-6">Select a mood dimension to visualize your patterns and insights.</p>
+                  
+                  {/* Mood Metric Selector */}
+                  <div className="flex flex-wrap gap-2 mb-6">
+                    {[
+                      { id: 'overallMood', label: 'Overall Mood', color: 'bg-pink-500' },
+                      { id: 'energy', label: 'Energy', color: 'bg-green-500' },
+                      { id: 'stress', label: 'Stress', color: 'bg-red-500' },
+                      { id: 'calmness', label: 'Calmness', color: 'bg-blue-500' },
+                      { id: 'emotionalStability', label: 'Stability', color: 'bg-purple-500' }
+                    ].map((metric) => (
+                      <button
+                        key={metric.id}
+                        onClick={() => setSelectedMoodMetric(metric.id)}
+                        className={`
+                          flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium transition-all duration-200
+                          ${selectedMoodMetric === metric.id 
+                            ? 'bg-gray-800 text-white shadow-md' 
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }
+                        `}
+                      >
+                        <div className={`w-2 h-2 ${metric.color} rounded-full`}></div>
+                        {metric.label}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  {/* Selected Metric Visualization */}
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ComposedChart data={wellnessData} margin={{ top: 20, right: 20, left: 40, bottom: 5 }}>
+                        <XAxis dataKey="date" tickFormatter={(str) => new Date(str).toLocaleDateString('en-US', { weekday: 'short' })} stroke="#9CA3AF" fontSize={12} />
+                        <YAxis stroke="#9CA3AF" fontSize={12} domain={[1, 5]} label={{ value: 'Rating (1-5)', angle: -90, position: 'insideLeft' }} />
+                        <Tooltip content={({ active, payload, label }: any) => {
+                          if (active && payload && payload.length) {
+                            const metricLabels = {
+                              overallMood: ['Very Low 😔', 'Low 😕', 'Neutral 😐', 'Good 🙂', 'Very Good 😄'],
+                              energy: ['Exhausted', 'Low', 'Moderate', 'Good', 'Energized'],
+                              stress: ['Calm', 'Slight', 'Moderate', 'High', 'Overwhelmed'],
+                              calmness: ['Irritable', 'Tense', 'Neutral', 'Peaceful', 'Very Calm'],
+                              emotionalStability: ['Very Moody', 'Moody', 'Neutral', 'Stable', 'Very Stable']
+                            };
+                            
+                            const data = payload[0].payload;
+                            const value = data[selectedMoodMetric];
+                            const labels = metricLabels[selectedMoodMetric as keyof typeof metricLabels];
+                            const metricColors = {
+                              overallMood: 'text-pink-600',
+                              energy: 'text-green-600',
+                              stress: 'text-red-600',
+                              calmness: 'text-blue-600',
+                              emotionalStability: 'text-purple-600'
+                            };
+                            
+                            return (
+                              <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+                                <p className="text-sm text-gray-600 mb-2">{new Date(label).toLocaleDateString()}</p>
+                                <p className={`text-sm font-medium ${metricColors[selectedMoodMetric as keyof typeof metricColors]}`}>
+                                  {selectedMoodMetric.charAt(0).toUpperCase() + selectedMoodMetric.slice(1)}: {labels[value - 1]} ({value}/5)
+                                </p>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }} />
+                        <Line 
+                          type="monotone" 
+                          dataKey={selectedMoodMetric} 
+                          stroke={
+                            selectedMoodMetric === 'overallMood' ? '#ec4899' :
+                            selectedMoodMetric === 'energy' ? '#10b981' :
+                            selectedMoodMetric === 'stress' ? '#ef4444' :
+                            selectedMoodMetric === 'calmness' ? '#3b82f6' :
+                            '#8b5cf6'
+                          }
+                          strokeWidth={3} 
+                          dot={{ 
+                            fill: selectedMoodMetric === 'overallMood' ? '#ec4899' :
+                                  selectedMoodMetric === 'energy' ? '#10b981' :
+                                  selectedMoodMetric === 'stress' ? '#ef4444' :
+                                  selectedMoodMetric === 'calmness' ? '#3b82f6' :
+                                  '#8b5cf6',
+                            strokeWidth: 2, 
+                            r: 6 
+                          }} 
+                          activeDot={{ r: 8 }} 
+                        />
+                        {selectedMoodMetric === 'overallMood' && <Scatter dataKey="overallMood" shape={<CustomScatterShape />} />}
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  </div>
+                  
+                  {/* Quick Insights */}
+                  <div className="mt-4 p-4 bg-gray-50 rounded-xl">
+                    <h4 className="font-medium text-gray-800 mb-2">Quick Insights</h4>
+                    <div className="text-sm text-gray-600">
+                      {selectedMoodMetric === 'overallMood' && "Track your daily emotional state to identify patterns and triggers."}
+                      {selectedMoodMetric === 'energy' && "Monitor energy levels to optimize rest and activity balance."}
+                      {selectedMoodMetric === 'stress' && "Identify stress spikes to implement coping strategies effectively."}
+                      {selectedMoodMetric === 'calmness' && "Track irritability patterns to manage hormonal and environmental triggers."}
+                      {selectedMoodMetric === 'emotionalStability' && "Monitor mood swings to identify concerning patterns for healthcare discussion."}
+                    </div>
                   </div>
                 </div>
                 <SymptomOverview symptomEntries={symptomEntriesData} />
               </div>
             </TabsContent>
+
 
 
             <TabsContent value="tasks" className="mt-0">

@@ -1,15 +1,64 @@
 import { useState, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
+import { Slider } from "@/components/ui/slider";
 import { WeekNavigator, filterEntriesByWeek } from "@/components/ui/week-navigator";
-import { Heart, Users, Baby, Bed, History, Calendar } from "lucide-react";
+import { Heart, Users, Baby, Bed, History, Calendar, Zap, Brain, Shield, Smile } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-const moods = [
-  { emoji: "😍", label: "Happy", value: "happy" },
-  { emoji: "🙂", label: "Content", value: "content" },
-  { emoji: "😐", label: "Neutral", value: "neutral" },
-  { emoji: "🥲", label: "Sad", value: "sad" },
-  { emoji: "😠", label: "Angry", value: "angry" },
+const overallMoods = [
+  { emoji: "😔", label: "Very Low", value: 1 },
+  { emoji: "😕", label: "Low", value: 2 },
+  { emoji: "😐", label: "Neutral", value: 3 },
+  { emoji: "🙂", label: "Good", value: 4 },
+  { emoji: "😄", label: "Very Good", value: 5 },
+];
+
+const moodDimensions = [
+  {
+    id: "overallMood",
+    title: "Overall Mood",
+    icon: Smile,
+    color: "text-pink-600",
+    bgColor: "bg-pink-100",
+    description: "Quick snapshot of daily emotional state",
+    labels: ["Very Low 😔", "Low 😕", "Neutral 😐", "Good 🙂", "Very Good 😄"]
+  },
+  {
+    id: "energy",
+    title: "Energy / Fatigue",
+    icon: Zap,
+    color: "text-green-600",
+    bgColor: "bg-green-100",
+    description: "How physical state and rest affect mood",
+    labels: ["Exhausted", "Low", "Moderate", "Good", "Energized"]
+  },
+  {
+    id: "stress",
+    title: "Stress / Anxiety",
+    icon: Shield,
+    color: "text-red-600",
+    bgColor: "bg-red-100",
+    description: "Identifies spikes in worry, stress, or overwhelm",
+    labels: ["Calm", "Slight", "Moderate", "High", "Overwhelmed"]
+  },
+  {
+    id: "calmness",
+    title: "Calmness / Irritability",
+    icon: Heart,
+    color: "text-blue-600",
+    bgColor: "bg-blue-100",
+    description: "Captures hormonal shifts, sleep effects, or tension",
+    labels: ["Irritable", "Tense", "Neutral", "Peaceful", "Very Calm"]
+  },
+  {
+    id: "emotionalStability",
+    title: "Emotional Stability",
+    icon: Brain,
+    color: "text-purple-600",
+    bgColor: "bg-purple-100",
+    description: "Helps spot mood swings that may signal postpartum concerns",
+    labels: ["Very Moody", "Moody", "Neutral", "Stable", "Very Stable"]
+  }
 ];
 
 const reasonTags = [
@@ -19,22 +68,36 @@ const reasonTags = [
   { label: "Sleep", icon: Bed },
 ];
 
-const getMoodAdvice = (mood: string, reason?: string) => {
-  const adviceMap = {
-    happy: "Great! Positive emotions support oxytocin and lower cortisol. Keep it up with light movement.",
-    content: "Wonderful! This balanced mood supports both your well-being and baby's development.",
-    neutral: "Flat mood could indicate overwhelm. Want a resource on prenatal anxiety?",
-    sad: "Persistent sadness could be hormonal or emotional. Consider 5-7 minutes of mindful breathing.",
-    angry: reason === "Partner" 
-      ? "Relationship strain is common. Try gratitude journaling or a 1-on-1 with your partner."
-      : "It's normal to feel frustrated. Take deep breaths and consider gentle movement to release tension."
-  };
-  return adviceMap[mood as keyof typeof adviceMap] || "Thank you for tracking your mood. This helps you stay aware of your emotional patterns.";
+const getMultiDimensionalAdvice = (values: typeof moodValues, reason?: string) => {
+  const { overallMood, energy, stress, calmness, emotionalStability } = values;
+  
+  // Priority advice based on concerning patterns
+  if (stress >= 4 && calmness <= 2) {
+    return "High stress and irritability detected. Consider deep breathing exercises or prenatal yoga to help regulate your nervous system.";
+  }
+  
+  if (energy <= 2 && overallMood <= 2) {
+    return "Low energy and mood may indicate need for more rest. Ensure adequate sleep and consider gentle movement like walking.";
+  }
+  
+  if (emotionalStability <= 2) {
+    return "Mood swings are common during pregnancy. Consider tracking patterns and discuss with your healthcare provider if concerning.";
+  }
+  
+  if (overallMood >= 4 && energy >= 4) {
+    return "Great mood and energy levels! This positive state supports both your well-being and baby's development.";
+  }
+  
+  return "Thank you for tracking your mood across multiple dimensions. This comprehensive data helps identify patterns in your emotional wellness.";
 };
 
 interface MoodEntry {
   id: string;
-  mood: string;
+  overallMood: number;
+  energy: number;
+  stress: number;
+  calmness: number;
+  emotionalStability: number;
   reasons: string[];
   notes: string;
   date: string;
@@ -42,7 +105,13 @@ interface MoodEntry {
 }
 
 export function MoodTracker() {
-  const [selectedMood, setSelectedMood] = useState<string>("");
+  const [moodValues, setMoodValues] = useState({
+    overallMood: 3,
+    energy: 3,
+    stress: 3,
+    calmness: 3,
+    emotionalStability: 3
+  });
   const [selectedReasons, setSelectedReasons] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
   const [moodHistory, setMoodHistory] = useState<MoodEntry[]>([]);
@@ -57,8 +126,11 @@ export function MoodTracker() {
     }
   }, []);
 
-  const handleMoodSelect = (mood: string) => {
-    setSelectedMood(mood);
+  const handleMoodChange = (dimensionId: string, value: number[]) => {
+    setMoodValues(prev => ({
+      ...prev,
+      [dimensionId]: value[0]
+    }));
   };
 
   const toggleReason = (reason: string) => {
@@ -70,11 +142,13 @@ export function MoodTracker() {
   };
 
   const handleSubmit = () => {
-    if (!selectedMood) return;
-    
     const newEntry: MoodEntry = {
       id: Date.now().toString(),
-      mood: selectedMood,
+      overallMood: moodValues.overallMood,
+      energy: moodValues.energy,
+      stress: moodValues.stress,
+      calmness: moodValues.calmness,
+      emotionalStability: moodValues.emotionalStability,
       reasons: selectedReasons,
       notes: notes,
       date: new Date().toISOString().split('T')[0],
@@ -85,7 +159,7 @@ export function MoodTracker() {
     setMoodHistory(updatedHistory);
     localStorage.setItem('moodHistory', JSON.stringify(updatedHistory));
     
-    const advice = getMoodAdvice(selectedMood, selectedReasons[0]);
+    const advice = getMultiDimensionalAdvice(moodValues, selectedReasons[0]);
     
     toast({
       title: "Mood logged! 💚",
@@ -94,98 +168,98 @@ export function MoodTracker() {
     });
 
     // Reset form
-    setSelectedMood("");
+    setMoodValues({
+      overallMood: 3,
+      energy: 3,
+      stress: 3,
+      calmness: 3,
+      emotionalStability: 3
+    });
     setSelectedReasons([]);
     setNotes("");
   };
 
-  const getMoodEmoji = (mood: string) => {
-    const moodObj = moods.find(m => m.value === mood);
+  const getMoodEmoji = (overallMood: number) => {
+    const moodObj = overallMoods.find(m => m.value === overallMood);
     return moodObj ? moodObj.emoji : "😐";
   };
 
-  const getMoodLabel = (mood: string) => {
-    const moodObj = moods.find(m => m.value === mood);
-    return moodObj ? moodObj.label : mood;
+  const getMoodLabel = (overallMood: number) => {
+    const moodObj = overallMoods.find(m => m.value === overallMood);
+    return moodObj ? moodObj.label : `Level ${overallMood}`;
   };
 
   return (
     <div className="min-h-screen bg-background p-2 sm:p-4 pb-24 max-w-full overflow-x-hidden">
 
-      {/* Mood Selector Section */}
+      {/* Multi-dimensional Mood Tracker */}
       <div className="mb-8">
         <h2 className="text-xl font-semibold text-foreground mb-2">
           How are you feeling today?
         </h2>
         <p className="text-sm text-muted-foreground mb-6">
-          Select the emoji that best represents your current mood
+          Rate each dimension on a scale of 1-5 to get a comprehensive view of your emotional wellness
         </p>
         
-        <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-4">
-          {moods.map((mood) => (
-            <button
-              key={mood.value}
-              onClick={() => handleMoodSelect(mood.value)}
-              className={`
-                relative p-2 sm:p-4 rounded-2xl text-center transition-all duration-200 
-                min-h-[70px] sm:min-h-[80px] w-full touch-manipulation
-                ${selectedMood === mood.value 
-                  ? 'bg-accent scale-105 shadow-lg border-2 border-primary' 
-                  : 'bg-white border border-border hover:scale-105 hover:shadow-md active:scale-95'
-                }
-              `}
-            >
-              <div className="text-2xl sm:text-3xl mb-1 sm:mb-2">{mood.emoji}</div>
-              <div className="text-xs font-medium text-foreground">
-                {mood.label}
+        <div className="space-y-6">
+          {moodDimensions.map((dimension) => {
+            const IconComponent = dimension.icon;
+            const currentValue = moodValues[dimension.id as keyof typeof moodValues];
+            
+            return (
+              <div key={dimension.id} className="bg-white rounded-2xl border border-border p-4 sm:p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className={`p-2 rounded-xl ${dimension.bgColor}`}>
+                    <IconComponent className={`w-5 h-5 ${dimension.color}`} />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-foreground text-base sm:text-lg">
+                      {dimension.title}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
+                      {dimension.description}
+                    </p>
+                  </div>
+                  <div className="text-2xl">
+                    {dimension.id === 'overallMood' ? getMoodEmoji(currentValue) : currentValue}
+                  </div>
+                </div>
+                
+                <div className="mb-3">
+                  <Slider
+                    value={[currentValue]}
+                    onValueChange={(value) => handleMoodChange(dimension.id, value)}
+                    min={1}
+                    max={5}
+                    step={1}
+                    className="w-full"
+                  />
+                </div>
+                
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>1</span>
+                  <span className="text-center font-medium">
+                    {dimension.labels[currentValue - 1]}
+                  </span>
+                  <span>5</span>
+                </div>
               </div>
-            </button>
-          ))}
+            );
+          })}
         </div>
       </div>
 
-      {/* Contributing Factors Section */}
-      {selectedMood && (
-        <div className="mb-8 animate-in fade-in duration-300">
-          <h3 className="text-lg font-semibold text-foreground mb-6">
-            What might be contributing? (Optional)
-          </h3>
-          <div className="flex flex-wrap gap-2 sm:gap-3">
-            {reasonTags.map((tag) => (
-              <button
-                key={tag.label}
-                onClick={() => toggleReason(tag.label)}
-                className={`
-                  flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 rounded-full text-xs sm:text-sm font-medium
-                  transition-all duration-200 touch-manipulation min-h-[40px] sm:min-h-[44px]
-                  ${selectedReasons.includes(tag.label)
-                    ? 'bg-secondary text-secondary-foreground border-2 border-primary shadow-sm' 
-                    : 'bg-white text-foreground border border-border hover:bg-accent hover:shadow-sm'
-                  }
-                `}
-              >
-                <tag.icon className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="whitespace-nowrap">{tag.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Additional Notes Section */}
-      {selectedMood && (
-        <div className="mb-8 animate-in fade-in duration-500">
-          <h3 className="text-lg font-semibold text-foreground mb-4">
-            Additional notes (Optional)
-          </h3>
-          <Textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="How are you feeling today? Any specific thoughts or concerns..."
-            className="min-h-[100px] sm:min-h-[120px] text-sm sm:text-base bg-white rounded-2xl border-border resize-none w-full"
-          />
-        </div>
-      )}
+      {/* Log Mood Entry Button */}
+      <div className="mb-8 flex justify-center">
+        <button 
+          onClick={handleSubmit}
+          className="bg-[#F28CAB] hover:bg-[#E07A9F] text-white font-semibold 
+                   py-3 sm:py-4 px-6 sm:px-8 rounded-2xl shadow-lg transition-all duration-200 
+                   min-h-[50px] sm:min-h-[56px] active:scale-98 hover:shadow-xl text-sm sm:text-base"
+        >
+          Log Mood Entry
+        </button>
+      </div>
 
       {/* Mood History Section */}
       <div className="mb-8">
@@ -224,13 +298,35 @@ export function MoodTracker() {
                 <div key={entry.id} className="bg-white rounded-2xl border border-border p-3 sm:p-4">
                   <div className="flex items-start justify-between mb-2 sm:mb-3">
                     <div className="flex items-center gap-2 sm:gap-3">
-                      <div className="text-xl sm:text-2xl">{getMoodEmoji(entry.mood)}</div>
+                      <div className="text-xl sm:text-2xl">{getMoodEmoji(entry.overallMood)}</div>
                       <div className="min-w-0 flex-1">
-                        <h3 className="font-medium text-foreground text-sm sm:text-base">{getMoodLabel(entry.mood)}</h3>
+                        <h3 className="font-medium text-foreground text-sm sm:text-base">{getMoodLabel(entry.overallMood)}</h3>
                         <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
                           <Calendar className="w-3 h-3 flex-shrink-0" />
                           <span className="truncate">{new Date(entry.date).toLocaleDateString()}</span>
                         </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Mood Dimensions Summary */}
+                  <div className="mb-2 sm:mb-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span>Energy: {entry.energy}/5</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                        <span>Stress: {entry.stress}/5</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <span>Calm: {entry.calmness}/5</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                        <span>Stable: {entry.emotionalStability}/5</span>
                       </div>
                     </div>
                   </div>
@@ -259,19 +355,6 @@ export function MoodTracker() {
         })()}
       </div>
 
-      {/* Primary Action Button */}
-      {selectedMood && (
-        <div className="fixed bottom-20 left-2 right-2 sm:left-4 sm:right-4 animate-in fade-in duration-700 z-50">
-          <button 
-            onClick={handleSubmit}
-            className="w-full bg-[#F28CAB] hover:bg-[#E07A9F] text-white font-semibold 
-                     py-3 sm:py-4 px-4 sm:px-6 rounded-2xl shadow-lg transition-all duration-200 
-                     min-h-[50px] sm:min-h-[56px] active:scale-98 hover:shadow-xl text-sm sm:text-base"
-          >
-            Log Mood Entry
-          </button>
-        </div>
-      )}
     </div>
   );
 }

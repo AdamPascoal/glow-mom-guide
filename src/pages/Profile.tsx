@@ -12,9 +12,9 @@ export default function Profile() {
   
   const [userInfo, setUserInfo] = useState({
     name: "Sarah Johnson",
+    username: "sarahj",
     age: "28",
     email: "sarah.johnson@email.com",
-    phoneNumber: "+1 (555) 123-4567",
     dateOfBirth: "1996-03-15",
     pregnancyStage: currentStage,
     joinDate: "2024-01-15",
@@ -185,6 +185,16 @@ export default function Profile() {
             </div>
 
             <div>
+              <Label htmlFor="username" className="text-sm font-medium">Username</Label>
+              <Input
+                id="username"
+                value={userInfo.username}
+                onChange={(e) => setUserInfo(prev => ({ ...prev, username: e.target.value }))}
+                className="mt-1"
+              />
+            </div>
+
+            <div>
               <Label htmlFor="age" className="text-sm font-medium">Age</Label>
               <Input
                 id="age"
@@ -204,17 +214,6 @@ export default function Profile() {
                 type="email"
                 value={userInfo.email}
                 onChange={(e) => setUserInfo(prev => ({ ...prev, email: e.target.value }))}
-                className="mt-1"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="phoneNumber" className="text-sm font-medium">Phone Number</Label>
-              <Input
-                id="phoneNumber"
-                type="tel"
-                value={userInfo.phoneNumber}
-                onChange={(e) => setUserInfo(prev => ({ ...prev, phoneNumber: e.target.value }))}
                 className="mt-1"
               />
             </div>

@@ -71,7 +71,6 @@ export default function VitaminSupplementForm() {
   const [newVitaminDosage, setNewVitaminDosage] = useState("");
   const [newVitaminUnit, setNewVitaminUnit] = useState("mg");
   const [isAddVitaminModalOpen, setIsAddVitaminModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'favorites' | 'selection'>('favorites');
   const [vitaminHistory, setVitaminHistory] = useState<VitaminHistoryEntry[]>([]);
   const [editingEntry, setEditingEntry] = useState<string | null>(null);
   const [editDate, setEditDate] = useState("");
@@ -85,6 +84,8 @@ export default function VitaminSupplementForm() {
   const [favoriteVitamins, setFavoriteVitamins] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isVitaminSelectionModalOpen, setIsVitaminSelectionModalOpen] = useState(false);
+  const [animatingVitamins, setAnimatingVitamins] = useState<Set<string>>(new Set());
 
   const addPredefinedVitamin = (vitamin: typeof predefinedVitamins[0]) => {
     const newVitamin: VitaminEntry = {
@@ -162,11 +163,28 @@ export default function VitaminSupplementForm() {
       return;
     }
 
-    setUserAddedVitamins(prev => [...prev, newVitamin]);
+    setUserAddedVitamins(prev => [newVitamin, ...prev]); // Add to beginning for top positioning
     setNewVitaminName("");
     setNewVitaminDosage("");
     setNewVitaminUnit("mg");
     setIsAddVitaminModalOpen(false);
+    
+    // Add animation for the new vitamin
+    setAnimatingVitamins(prev => new Set([...prev, newVitamin.name]));
+    setTimeout(() => {
+      setAnimatingVitamins(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(newVitamin.name);
+        return newSet;
+      });
+    }, 1000);
+    
+    // Re-open vitamin selection modal if it was open
+    if (isVitaminSelectionModalOpen) {
+      setTimeout(() => {
+        setIsVitaminSelectionModalOpen(true);
+      }, 100);
+    }
     
     toast({
       title: "Vitamin added! 💊",
@@ -243,10 +261,10 @@ export default function VitaminSupplementForm() {
   };
 
   const saveVitaminEdit = (originalName: string) => {
-    if (!editVitaminName.trim() || !editVitaminDosage.trim()) {
+    if (!editVitaminDosage.trim()) {
       toast({
         title: "Missing information",
-        description: "Please enter both name and dosage",
+        description: "Please enter dosage",
         variant: "destructive"
       });
       return;
@@ -255,6 +273,15 @@ export default function VitaminSupplementForm() {
     // Check if it's a user-added vitamin first
     const userVitaminIndex = userAddedVitamins.findIndex(v => v.name === originalName);
     if (userVitaminIndex !== -1) {
+      // For user-added vitamins, allow name editing
+      if (!editVitaminName.trim()) {
+        toast({
+          title: "Missing information",
+          description: "Please enter vitamin name",
+          variant: "destructive"
+        });
+        return;
+      }
       const updatedVitamins = [...userAddedVitamins];
       updatedVitamins[userVitaminIndex] = {
         name: editVitaminName.trim(),
@@ -263,13 +290,27 @@ export default function VitaminSupplementForm() {
       };
       setUserAddedVitamins(updatedVitamins);
     } else {
-      // It's a predefined vitamin - add the edited version to userAddedVitamins
-      const editedVitamin = {
-        name: editVitaminName.trim(),
-        defaultDosage: editVitaminDosage.trim(),
-        unit: editVitaminUnit
-      };
-      setUserAddedVitamins(prev => [...prev, editedVitamin]);
+      // For predefined vitamins, only update dosage/unit by creating or updating a custom version
+      const existingCustomIndex = userAddedVitamins.findIndex(v => v.name === originalName);
+      
+      if (existingCustomIndex !== -1) {
+        // Update existing custom version
+        const updatedVitamins = [...userAddedVitamins];
+        updatedVitamins[existingCustomIndex] = {
+          name: originalName,
+          defaultDosage: editVitaminDosage.trim(),
+          unit: editVitaminUnit
+        };
+        setUserAddedVitamins(updatedVitamins);
+      } else {
+        // Create new custom version
+        const editedVitamin = {
+          name: originalName,
+          defaultDosage: editVitaminDosage.trim(),
+          unit: editVitaminUnit
+        };
+        setUserAddedVitamins(prev => [...prev, editedVitamin]);
+      }
     }
 
     setEditingVitamin(null);
@@ -278,8 +319,8 @@ export default function VitaminSupplementForm() {
     setEditVitaminUnit("");
 
     toast({
-      title: "Vitamin updated! 💊",
-      description: `${editVitaminName} has been updated`,
+      title: "Dosage updated! 💊",
+      description: `${originalName} dosage has been updated`,
     });
   };
 
@@ -307,7 +348,7 @@ export default function VitaminSupplementForm() {
     setSlideStates(prev => ({ ...prev, [vitaminName]: !prev[vitaminName] }));
   };
 
-  const toggleFavorite = (vitaminName: string) => {
+  const toggleFavorite = (vitaminName: string, showToast: boolean = true) => {
     setFavoriteVitamins(prev => {
       const isFavorite = prev.includes(vitaminName);
       if (isFavorite) {
@@ -317,11 +358,13 @@ export default function VitaminSupplementForm() {
       }
     });
     
-    const isFavorite = favoriteVitamins.includes(vitaminName);
-    toast({
-      title: isFavorite ? "Removed from favorites" : "Added to favorites! ❤️",
-      description: `${vitaminName} ${isFavorite ? 'removed from' : 'added to'} your favorites`,
-    });
+    if (showToast) {
+      const isFavorite = favoriteVitamins.includes(vitaminName);
+      toast({
+        title: isFavorite ? "Removed from My Vitamins" : "Added to My Vitamins! ❤️",
+        description: `${vitaminName} ${isFavorite ? 'removed from' : 'added to'} My Vitamins`,
+      });
+    }
   };
 
   const isFavorite = (vitaminName: string) => {
@@ -410,9 +453,46 @@ export default function VitaminSupplementForm() {
 
   // Combine predefined and user-added vitamins
   const allAvailableVitamins = [...predefinedVitamins, ...userAddedVitamins];
+  
+  // Sort vitamins with custom ones at the top
+  const getSortedVitamins = () => {
+    return [...allAvailableVitamins].sort((a, b) => {
+      const aIsUserAdded = userAddedVitamins.some(v => v.name === a.name);
+      const bIsUserAdded = userAddedVitamins.some(v => v.name === b.name);
+      
+      if (aIsUserAdded && !bIsUserAdded) return -1;
+      if (!aIsUserAdded && bIsUserAdded) return 1;
+      return a.name.localeCompare(b.name);
+    });
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 pb-20 md:pb-8">
+    <>
+      <style jsx>{`
+        @keyframes slideInFromTop {
+          0% {
+            transform: translateY(-20px) scale(0.9);
+            opacity: 0;
+          }
+          50% {
+            transform: translateY(-5px) scale(1.05);
+          }
+          100% {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+          }
+        }
+        
+        .vitamin-card-enter {
+          animation: slideInFromTop 0.6s ease-out;
+        }
+        
+        .hover\\:scale-102:hover {
+          transform: scale(1.02);
+        }
+      `}</style>
+      
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 pb-20 md:pb-8">
       {/* Header */}
       <div className="bg-white/50 backdrop-blur-sm border-b border-green-200/50 sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 md:px-6 py-4">
@@ -435,36 +515,8 @@ export default function VitaminSupplementForm() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 md:px-6 py-6">
-        {/* Tab Navigation */}
-        <div className="flex bg-white/80 backdrop-blur-sm rounded-lg p-1 mb-6 border border-green-200">
-          <button
-            type="button"
-            onClick={() => setActiveTab('favorites')}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-              activeTab === 'favorites'
-                ? 'bg-green-600 text-white shadow-sm'
-                : 'text-gray-600 hover:text-green-600'
-            }`}
-          >
-            <Heart className="w-4 h-4 inline mr-2" />
-            Favorites
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('selection')}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-              activeTab === 'selection'
-                ? 'bg-green-600 text-white shadow-sm'
-                : 'text-gray-600 hover:text-green-600'
-            }`}
-          >
-            <Pill className="w-4 h-4 inline mr-2" />
-            Vitamin Selection
-          </button>
-        </div>
 
-        {activeTab === 'favorites' ? (
-        /* Favorites Tab - Shows Selected Vitamins */
+        {/* My Vitamins - Shows Selected Vitamins */}
         <div className="space-y-6">
           {/* Daily History Card */}
           <Card className="p-6 border-blue-200 bg-white/80 backdrop-blur-sm">
@@ -543,7 +595,7 @@ export default function VitaminSupplementForm() {
                               variant="ghost"
                               size="sm"
                               onClick={() => startEditEntry(entry)}
-                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-100 p-1 h-8 w-8"
+                              className="text-black hover:text-gray-800 hover:bg-gray-100 p-1 h-8 w-8"
                             >
                               <Edit3 className="w-4 h-4" />
                             </Button>
@@ -623,16 +675,24 @@ export default function VitaminSupplementForm() {
                 <Heart className="w-5 h-5 text-green-600" />
                 My Selected Vitamins
               </h2>
-              <div className="text-sm text-gray-600">
-                {favoriteVitamins.length} favorites
+              <div className="flex items-center gap-3">
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => setIsVitaminSelectionModalOpen(true)}
+                  className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 h-8 text-xs"
+                >
+                  <Plus className="w-3 h-3 mr-1" />
+                  Add Vitamins
+                </Button>
               </div>
             </div>
             
             {favoriteVitamins.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <Heart className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                <p className="text-lg font-medium mb-1">No favorites yet</p>
-                <p className="text-sm">Add vitamins to favorites in the Selection tab to see them here</p>
+                <p className="text-lg font-medium mb-1">No vitamins selected yet</p>
+                <p className="text-sm">Add vitamins to My Vitamins in the Selection tab to see them here</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 auto-rows-fr">
@@ -684,396 +744,211 @@ export default function VitaminSupplementForm() {
             )}
           </Card>
         </div>
-        ) : activeTab === 'selection' ? (
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Vitamin Selection */}
-          <Card className="p-6 border-green-200 bg-white/80 backdrop-blur-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                <Pill className="w-5 h-5 text-green-600" />
-                Select Vitamins & Supplements
-              </h2>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsAddVitaminModalOpen(true)}
-                className="text-green-600 hover:text-green-700 hover:bg-green-50"
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                Add New
-              </Button>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {allAvailableVitamins.map((vitamin) => {
-                const isUserAdded = userAddedVitamins.some(v => v.name === vitamin.name);
-                const isSlid = slideStates[vitamin.name] || false;
-                
-                return editingVitamin === vitamin.name ? (
-                  <div key={vitamin.name} className="p-3 rounded-lg border-2 border-blue-300 bg-blue-50">
-                    <div className="space-y-3">
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium">Vitamin Name</Label>
-                        <Input
-                          value={editVitaminName}
-                          onChange={(e) => setEditVitaminName(e.target.value)}
-                          className="border-blue-200 focus:border-blue-400 text-sm"
-                          placeholder="Vitamin name"
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium">Dosage</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            value={editVitaminDosage}
-                            onChange={(e) => setEditVitaminDosage(e.target.value)}
-                            className="flex-1 border-blue-200 focus:border-blue-400 text-sm"
-                            placeholder="Amount"
-                          />
-                          <Select
-                            value={editVitaminUnit}
-                            onValueChange={setEditVitaminUnit}
-                          >
-                            <SelectTrigger className="w-12 sm:w-16 border-blue-200 text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {dosageUnits.map((unit) => (
-                                <SelectItem key={unit} value={unit}>
-                                  {unit}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          size="sm"
-                          onClick={() => saveVitaminEdit(vitamin.name)}
-                          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white h-7 text-xs"
-                        >
-                          Save
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={cancelVitaminEdit}
-                          className="flex-1 h-7 text-xs"
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          onClick={() => {
-                            deleteVitamin(vitamin.name);
-                            cancelVitaminEdit();
-                          }}
-                          className="bg-red-600 hover:bg-red-700 text-white h-7 px-3 text-xs"
-                        >
-                          <Trash2 className="w-3 h-3 mr-1" />
-                          Delete
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div key={vitamin.name} className="relative overflow-hidden rounded-lg">
-                    {/* Slide Actions Background */}
-                    <div className={`absolute inset-0 flex items-center justify-end pr-3 transition-opacity duration-200 ${
-                      isSlid ? 'opacity-100' : 'opacity-0'
-                    } bg-gradient-to-l from-red-500 to-blue-500`}>
-                      <div className="flex gap-2">
-                        {isUserAdded && (
-                          <Button
-                            type="button"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              startEditVitamin(vitamin);
-                            }}
-                            className="bg-blue-600 hover:bg-blue-700 text-white p-1 h-7 w-7"
-                          >
-                            <Edit3 className="w-3 h-3" />
-                          </Button>
-                        )}
-                        {isUserAdded && (
-                          <Button
-                            type="button"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteVitamin(vitamin.name);
-                            }}
-                            className="bg-red-600 hover:bg-red-700 text-white p-1 h-7 w-7"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* Main Vitamin Card */}
+      </div>
+
+      {/* Vitamin Selection Modal */}
+      {isVitaminSelectionModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl mx-auto border border-green-200 max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-800">
+                    Select Vitamins & Supplements
+                  </h2>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Choose or add vitamins to add to your daily routine
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsVitaminSelectionModalOpen(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
+              
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-gray-800">Available Vitamins</h3>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setIsAddVitaminModalOpen(true);
+                  }}
+                  className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add New Vitamin
+                </Button>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto">
+                {getSortedVitamins().map((vitamin, index) => {
+                  const isUserAdded = userAddedVitamins.some(v => v.name === vitamin.name);
+                  const isSelected = isFavorite(vitamin.name);
+                  const isAnimating = animatingVitamins.has(vitamin.name);
+                  
+                  return (
                     <div
+                      key={vitamin.name}
                       className={`
-                        p-3 border-2 cursor-pointer transition-all duration-200 transform
-                        ${isFavorite(vitamin.name)
-                          ? 'border-pink-400 bg-pink-50 shadow-md'
-                          : isVitaminSelected(vitamin.name)
-                          ? 'border-green-500 bg-green-50'
-                          : 'border-green-200 hover:border-green-300 bg-white'
+                        p-4 rounded-lg border-2 cursor-pointer transition-all duration-300 transform
+                        ${isSelected
+                          ? 'border-pink-400 bg-pink-50 shadow-md scale-105'
+                          : 'border-green-200 hover:border-green-300 bg-white hover:shadow-sm hover:scale-102'
                         }
-                        ${isSlid ? '-translate-x-16 sm:-translate-x-20' : 'translate-x-0'}
+                        ${isAnimating ? 'animate-pulse bg-green-100 border-green-400' : ''}
+                        ${isUserAdded ? 'ring-2 ring-blue-200 ring-opacity-50' : ''}
                       `}
+                      style={{
+                        animationDelay: `${index * 50}ms`
+                      }}
                       onClick={() => {
-                        if (isSlid) {
-                          setSlideStates(prev => ({ ...prev, [vitamin.name]: false }));
-                        }
-                        // Card click no longer handles selection - only favorites and edit buttons work
-                      }}
-                      onTouchStart={(e) => {
-                        if (isUserAdded) {
-                          const startX = e.touches[0].clientX;
-                          const handleTouchMove = (moveEvent: TouchEvent) => {
-                            const currentX = moveEvent.touches[0].clientX;
-                            const diffX = startX - currentX;
-                            if (diffX > 50) {
-                              toggleSlide(vitamin.name);
-                              document.removeEventListener('touchmove', handleTouchMove);
-                            }
-                          };
-                          document.addEventListener('touchmove', handleTouchMove);
-                          document.addEventListener('touchend', () => {
-                            document.removeEventListener('touchmove', handleTouchMove);
-                          }, { once: true });
-                        }
-                      }}
-                      onDoubleClick={() => {
-                        if (isUserAdded) {
-                          toggleSlide(vitamin.name);
+                        if (editingVitamin !== vitamin.name) {
+                          // Add animation effect
+                          setAnimatingVitamins(prev => new Set([...prev, vitamin.name]));
+                          setTimeout(() => {
+                            setAnimatingVitamins(prev => {
+                              const newSet = new Set(prev);
+                              newSet.delete(vitamin.name);
+                              return newSet;
+                            });
+                          }, 600);
+                          
+                          toggleFavorite(vitamin.name, false);
                         }
                       }}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <div className="font-medium text-gray-800 text-sm">
-                              {vitamin.name}
-                            </div>
-                            {isFavorite(vitamin.name) && (
+                            {editingVitamin === vitamin.name && isUserAdded ? (
+                              <Input
+                                value={editVitaminName}
+                                onChange={(e) => setEditVitaminName(e.target.value)}
+                                className="text-sm h-6 px-2 w-24"
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            ) : (
+                              <h4 className="font-medium text-gray-800 text-sm">
+                                {vitamin.name}
+                              </h4>
+                            )}
+                            {isSelected && editingVitamin !== vitamin.name && (
                               <Heart className="w-3 h-3 text-pink-500 fill-current" />
                             )}
+                            {isUserAdded && editingVitamin !== vitamin.name && (
+                              <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">Custom</span>
+                            )}
                           </div>
-                          <div className="text-xs text-gray-600">
-                            {vitamin.defaultDosage} {vitamin.unit}
+                          <div className="text-xs text-gray-600 mb-2">
+                            {editingVitamin === vitamin.name ? (
+                              <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                                <Input
+                                  value={editVitaminDosage}
+                                  onChange={(e) => setEditVitaminDosage(e.target.value)}
+                                  className="text-xs h-5 px-1 w-12"
+                                />
+                                <Select
+                                  value={editVitaminUnit}
+                                  onValueChange={setEditVitaminUnit}
+                                >
+                                  <SelectTrigger className="w-12 h-5 text-xs px-1">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {dosageUnits.map((unit) => (
+                                      <SelectItem key={unit} value={unit} className="text-xs">
+                                        {unit}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            ) : (
+                              `${vitamin.defaultDosage} ${vitamin.unit}`
+                            )}
                           </div>
-                          {isFavorite(vitamin.name) && (
-                            <div className="text-xs text-pink-600 mt-1">★ Favorite</div>
+                          {isSelected && (
+                            <div className="text-xs text-pink-600">★ Selected</div>
                           )}
                         </div>
                         
                         <div className="flex items-center gap-2">
-                          {/* Favorite Toggle Button */}
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleFavorite(vitamin.name);
-                            }}
-                            className={`
-                              p-1 rounded-full transition-all duration-200 hover:scale-110
-                              ${isFavorite(vitamin.name)
-                                ? 'bg-pink-100 text-pink-600 hover:bg-pink-200'
-                                : 'bg-gray-100 text-gray-400 hover:bg-pink-100 hover:text-pink-500'
-                              }
-                            `}
-                          >
-                            <Heart className={`w-4 h-4 ${
-                              isFavorite(vitamin.name) ? 'fill-current' : ''
-                            }`} />
-                          </button>
-                          
-                          {/* Edit Button */}
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              startEditVitamin(vitamin);
-                            }}
-                            className="p-1 rounded-full transition-all duration-200 hover:scale-110 bg-blue-100 text-blue-600 hover:bg-blue-200"
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </button>
+                          {editingVitamin === vitamin.name ? (
+                            <div className="flex gap-1">
+                              <Button
+                                type="button"
+                                size="sm"
+                                onClick={() => saveVitaminEdit(vitamin.name)}
+                                className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 h-6 text-xs"
+                              >
+                                ✓
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={cancelVitaminEdit}
+                                className="px-2 py-1 h-6 text-xs"
+                              >
+                                ✕
+                              </Button>
+                            </div>
+                          ) : (
+                            <>
+                              <Button
+                                type="button"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  startEditVitamin(vitamin);
+                                }}
+                                className="text-black hover:text-gray-800 bg-white hover:bg-gray-100 p-1 h-6 w-6 border border-gray-200"
+                              >
+                                <Edit3 className="w-3 h-3" />
+                              </Button>
+                              <div className={`
+                                w-5 h-5 rounded-full border-2 flex items-center justify-center
+                                ${isSelected
+                                  ? 'border-pink-500 bg-pink-500'
+                                  : 'border-gray-300'
+                                }
+                              `}>
+                                {isSelected && (
+                                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                  </svg>
+                                )}
+                              </div>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          </Card>
-
-
-
-          {/* Custom Vitamins Configuration */}
-          {customVitamins.length > 0 && (
-          <Card className="p-6 border-green-200 bg-white/80 backdrop-blur-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-800">
-                Quick Add (One-time Use)
-              </h2>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={addCustomVitamin}
-                className="text-green-600 hover:text-green-700 hover:bg-green-50"
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                Add
-              </Button>
-            </div>
-            
-            <div className="space-y-4">
-              {customVitamins.map((vitamin) => (
-                <div key={vitamin.id} className="p-4 bg-green-50 rounded-lg border border-green-200">
-                  <div className="flex items-center justify-between mb-3">
-                    <Input
-                      value={vitamin.name}
-                      onChange={(e) => updateCustomVitamin(vitamin.id, { name: e.target.value })}
-                      placeholder="e.g., Vitamin C, Magnesium..."
-                      className="flex-1 mr-3 border-green-200 focus:border-green-400 font-medium"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeCustomVitamin(vitamin.id)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Minus className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    <div className="space-y-2">
-                      <Label>Dosage</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          value={vitamin.dosage}
-                          onChange={(e) => updateCustomVitamin(vitamin.id, { dosage: e.target.value })}
-                          className="flex-1 border-green-200"
-                          placeholder="Amount"
-                        />
-                        <Select
-                          value={vitamin.unit}
-                          onValueChange={(value) => updateCustomVitamin(vitamin.id, { unit: value })}
-                        >
-                          <SelectTrigger className="w-16 sm:w-20 border-green-200">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {dosageUnits.map((unit) => (
-                              <SelectItem key={unit} value={unit}>
-                                {unit}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label>Timing</Label>
-                      <Select
-                        value={vitamin.timing}
-                        onValueChange={(value) => updateCustomVitamin(vitamin.id, { timing: value })}
-                      >
-                        <SelectTrigger className="border-green-200">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {timingOptions.map((timing) => (
-                            <SelectItem key={timing} value={timing}>
-                              {timing}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label>Frequency</Label>
-                      <Select
-                        value={vitamin.frequency}
-                        onValueChange={(value) => updateCustomVitamin(vitamin.id, { frequency: value })}
-                      >
-                        <SelectTrigger className="border-green-200">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Daily">Daily</SelectItem>
-                          <SelectItem value="Every other day">Every other day</SelectItem>
-                          <SelectItem value="Weekly">Weekly</SelectItem>
-                          <SelectItem value="As needed">As needed</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-3 flex items-center space-x-2">
-                    <Checkbox
-                      id={`withFood-${vitamin.id}`}
-                      checked={vitamin.withFood}
-                      onCheckedChange={(checked) => updateCustomVitamin(vitamin.id, { withFood: !!checked })}
-                      className="border-green-300 data-[state=checked]:bg-green-600"
-                    />
-                    <Label htmlFor={`withFood-${vitamin.id}`} className="text-sm">
-                      Take with food
-                    </Label>
-                  </div>
-                </div>
-              ))}
+                  );
+                })}
+              </div>
               
-              {customVitamins.length === 0 && (
-                <div className="text-center py-4 text-gray-500">
-                  <p className="text-sm">No additional vitamins added yet.</p>
-                  <p className="text-xs">Click "Add" to include custom vitamins or medications.</p>
-                </div>
-              )}
+              <div className="flex justify-end gap-3 pt-6 border-t border-gray-200 mt-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsVitaminSelectionModalOpen(false)}
+                  className="px-6 border-gray-200 text-gray-600 hover:bg-gray-50"
+                >
+                  Done
+                </Button>
+              </div>
             </div>
-          </Card>
-          )}
-
-          {/* Submit Button */}
-          {activeTab === 'selection' && !editingVitamin && (
-            <div className="flex gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => navigate("/add-task")}
-                className="flex-1 border-green-200 text-green-600 hover:bg-green-50"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-              >
-                {isSubmitting ? "Saving..." : "Add to Daily Routine"}
-              </Button>
-            </div>
-          )}
-        </form>
-        ) : null}
-      </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Vitamin Modal */}
       {isAddVitaminModalOpen && (
@@ -1160,6 +1035,7 @@ export default function VitaminSupplementForm() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }

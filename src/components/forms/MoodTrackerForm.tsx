@@ -56,30 +56,10 @@ export default function MoodTrackerForm() {
 
         {/* Mood Tracker Card */}
         <Card className="p-6 mb-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 rounded-xl bg-pink-100">
-              <Heart className="w-5 h-5 text-pink-600" />
-            </div>
-            <h3 className="text-lg font-semibold text-card-foreground">
-              How are you feeling today?
-            </h3>
-          </div>
-
           {/* Mood Tracker Component */}
           <MoodTracker />
         </Card>
 
-        {/* Complete Button */}
-        <div className="flex justify-center md:justify-end">
-          <Button
-            onClick={handleComplete}
-            disabled={isSubmitting}
-            className="w-full md:w-auto px-8"
-          >
-            <Heart className="w-4 h-4 mr-2" />
-            {isSubmitting ? "Saving..." : "Complete Tracking"}
-          </Button>
-        </div>
       </div>
     </div>
   );
