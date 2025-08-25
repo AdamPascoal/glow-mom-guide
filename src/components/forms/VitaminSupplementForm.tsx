@@ -483,7 +483,7 @@ export default function VitaminSupplementForm() {
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
-                <div className="text-sm font-medium text-gray-700 min-w-[120px] text-center">
+                <div className="text-sm font-medium text-gray-700 min-w-0 w-24 sm:min-w-[120px] text-center">
                   {currentHistoryDate.toLocaleDateString('en-US', { 
                     month: 'short', 
                     day: 'numeric',
@@ -635,7 +635,7 @@ export default function VitaminSupplementForm() {
                 <p className="text-sm">Add vitamins to favorites in the Selection tab to see them here</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 auto-rows-fr">
                 {allAvailableVitamins
                   .filter(vitamin => favoriteVitamins.includes(vitamin.name))
                   .map((vitamin) => {
@@ -705,7 +705,7 @@ export default function VitaminSupplementForm() {
               </Button>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {allAvailableVitamins.map((vitamin) => {
                 const isUserAdded = userAddedVitamins.some(v => v.name === vitamin.name);
                 const isSlid = slideStates[vitamin.name] || false;
@@ -736,7 +736,7 @@ export default function VitaminSupplementForm() {
                             value={editVitaminUnit}
                             onValueChange={setEditVitaminUnit}
                           >
-                            <SelectTrigger className="w-16 border-blue-200 text-xs">
+                            <SelectTrigger className="w-12 sm:w-16 border-blue-200 text-xs">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -829,7 +829,7 @@ export default function VitaminSupplementForm() {
                           ? 'border-green-500 bg-green-50'
                           : 'border-green-200 hover:border-green-300 bg-white'
                         }
-                        ${isSlid ? 'translate-x-[-80px]' : 'translate-x-0'}
+                        ${isSlid ? '-translate-x-16 sm:-translate-x-20' : 'translate-x-0'}
                       `}
                       onClick={() => {
                         if (isSlid) {
@@ -961,7 +961,7 @@ export default function VitaminSupplementForm() {
                     </Button>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     <div className="space-y-2">
                       <Label>Dosage</Label>
                       <div className="flex gap-2">
@@ -975,7 +975,7 @@ export default function VitaminSupplementForm() {
                           value={vitamin.unit}
                           onValueChange={(value) => updateCustomVitamin(vitamin.id, { unit: value })}
                         >
-                          <SelectTrigger className="w-20 border-green-200">
+                          <SelectTrigger className="w-16 sm:w-20 border-green-200">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -1078,7 +1078,7 @@ export default function VitaminSupplementForm() {
       {/* Add Vitamin Modal */}
       {isAddVitaminModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-auto border border-green-200">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-auto border border-green-200 max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-gray-800">
@@ -1119,7 +1119,7 @@ export default function VitaminSupplementForm() {
                       value={newVitaminUnit}
                       onValueChange={setNewVitaminUnit}
                     >
-                      <SelectTrigger className="w-20 border-green-200">
+                      <SelectTrigger className="w-16 sm:w-20 border-green-200">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>

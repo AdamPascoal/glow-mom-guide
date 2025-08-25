@@ -167,14 +167,15 @@ export function CircularTimeSlider({
   };
 
   return (
-    <div className="flex flex-col items-center space-y-6 w-full">
-      <div className="relative flex justify-center">
+    <div className="flex flex-col items-center space-y-4 md:space-y-6 w-full px-4">
+      <div className="relative flex justify-center w-full">
         <svg
           ref={svgRef}
-          width="300"
-          height="300"
-          className="transform -rotate-90 max-w-[90vw] max-h-[90vw]"
+          width="100%"
+          height="auto"
+          className="transform -rotate-90 max-w-[240px] sm:max-w-[280px] max-h-[240px] sm:max-h-[280px] w-full h-auto"
           viewBox="0 0 280 280"
+          preserveAspectRatio="xMidYMid meet"
         >
           {/* Outer ring background */}
           <circle
@@ -239,7 +240,7 @@ export function CircularTimeSlider({
             />
             <Moon 
               size={16} 
-              className="fill-white stroke-white transform rotate-90 translate-x-[-8px] translate-y-[-8px] pointer-events-none" 
+              className="fill-white stroke-white transform rotate-90 -translate-x-2 -translate-y-2 pointer-events-none" 
             />
           </g>
           
@@ -256,44 +257,44 @@ export function CircularTimeSlider({
             />
             <Sun 
               size={16} 
-              className="fill-white stroke-white transform rotate-90 translate-x-[-8px] translate-y-[-8px] pointer-events-none" 
+              className="fill-white stroke-white transform rotate-90 -translate-x-2 -translate-y-2 pointer-events-none" 
             />
           </g>
         </svg>
         
         {/* Center display */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-          <div className="text-3xl md:text-4xl font-bold text-sleep-primary mb-1">
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+          <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-sleep-primary mb-1">
             {sleepDuration.hours}h {sleepDuration.minutes}m
           </div>
-          <div className="text-sm text-sleep-secondary opacity-80">sleep duration</div>
+          <div className="text-xs sm:text-sm text-sleep-secondary opacity-80">sleep duration</div>
         </div>
       </div>
       
       {/* Medical Feedback */}
-      <div className="w-full max-w-md px-4">
-        <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-4">
-          <p className="text-white/90 text-sm leading-relaxed text-center">
+      <div className="w-full max-w-md">
+        <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-3 md:p-4">
+          <p className="text-white/90 text-xs sm:text-sm leading-relaxed text-center">
             {getMedicalFeedback()}
           </p>
         </div>
       </div>
       
       {/* Time labels */}
-      <div className="flex justify-between w-full max-w-sm px-4">
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-2 text-sleep-moon font-medium mb-1">
-            <Moon size={16} />
-            <span>Bedtime</span>
+      <div className="flex justify-between w-full max-w-sm">
+        <div className="text-center flex-1">
+          <div className="flex items-center justify-center gap-1 sm:gap-2 text-sleep-moon font-medium mb-1">
+            <Moon size={14} className="sm:w-4 sm:h-4" />
+            <span className="text-xs sm:text-sm">Bedtime</span>
           </div>
-          <div className="text-white/80 text-lg font-semibold">{formatTime(bedtime)}</div>
+          <div className="text-white/80 text-sm sm:text-lg font-semibold">{formatTime(bedtime)}</div>
         </div>
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-2 text-sleep-accent font-medium mb-1">
-            <Sun size={16} />
-            <span>Wake Up</span>
+        <div className="text-center flex-1">
+          <div className="flex items-center justify-center gap-1 sm:gap-2 text-sleep-accent font-medium mb-1">
+            <Sun size={14} className="sm:w-4 sm:h-4" />
+            <span className="text-xs sm:text-sm">Wake Up</span>
           </div>
-          <div className="text-white/80 text-lg font-semibold">{formatTime(waketime)}</div>
+          <div className="text-white/80 text-sm sm:text-lg font-semibold">{formatTime(waketime)}</div>
         </div>
       </div>
     </div>

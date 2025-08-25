@@ -240,7 +240,7 @@ export default function Profile() {
                   setUserInfo(prev => ({ ...prev, pregnancyStage: newStage }));
                   setCurrentStage(newStage);
                 }}
-                className="mt-1 px-3 py-2 border border-input bg-background text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent min-w-[160px]"
+                className="mt-1 px-3 py-2 border border-input bg-background text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent min-w-0 w-full sm:min-w-[160px] sm:w-auto"
               >
                 <option value="Trying to Conceive">Trying to Conceive</option>
                 <option value="Incubator Stage">Incubator Stage</option>

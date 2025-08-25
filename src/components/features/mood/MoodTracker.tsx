@@ -108,7 +108,7 @@ export function MoodTracker() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 pb-24">
+    <div className="min-h-screen bg-background p-2 sm:p-4 pb-24 max-w-full overflow-x-hidden">
 
       {/* Mood Selector Section */}
       <div className="mb-8">
@@ -119,21 +119,21 @@ export function MoodTracker() {
           Select the emoji that best represents your current mood
         </p>
         
-        <div className="grid grid-cols-3 sm:grid-cols-5 gap-4">
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-4">
           {moods.map((mood) => (
             <button
               key={mood.value}
               onClick={() => handleMoodSelect(mood.value)}
               className={`
-                relative p-4 rounded-2xl text-center transition-all duration-200 
-                min-h-[80px] min-w-[80px] touch-manipulation
+                relative p-2 sm:p-4 rounded-2xl text-center transition-all duration-200 
+                min-h-[70px] sm:min-h-[80px] w-full touch-manipulation
                 ${selectedMood === mood.value 
                   ? 'bg-accent scale-105 shadow-lg border-2 border-primary' 
                   : 'bg-white border border-border hover:scale-105 hover:shadow-md active:scale-95'
                 }
               `}
             >
-              <div className="text-3xl mb-2">{mood.emoji}</div>
+              <div className="text-2xl sm:text-3xl mb-1 sm:mb-2">{mood.emoji}</div>
               <div className="text-xs font-medium text-foreground">
                 {mood.label}
               </div>
@@ -148,22 +148,22 @@ export function MoodTracker() {
           <h3 className="text-lg font-semibold text-foreground mb-6">
             What might be contributing? (Optional)
           </h3>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2 sm:gap-3">
             {reasonTags.map((tag) => (
               <button
                 key={tag.label}
                 onClick={() => toggleReason(tag.label)}
                 className={`
-                  flex items-center gap-2 px-4 py-3 rounded-full text-sm font-medium
-                  transition-all duration-200 touch-manipulation min-h-[44px]
+                  flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 rounded-full text-xs sm:text-sm font-medium
+                  transition-all duration-200 touch-manipulation min-h-[40px] sm:min-h-[44px]
                   ${selectedReasons.includes(tag.label)
                     ? 'bg-secondary text-secondary-foreground border-2 border-primary shadow-sm' 
                     : 'bg-white text-foreground border border-border hover:bg-accent hover:shadow-sm'
                   }
                 `}
               >
-                <tag.icon className="w-4 h-4" />
-                {tag.label}
+                <tag.icon className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="whitespace-nowrap">{tag.label}</span>
               </button>
             ))}
           </div>
@@ -180,7 +180,7 @@ export function MoodTracker() {
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="How are you feeling today? Any specific thoughts or concerns..."
-            className="min-h-[120px] text-base bg-white rounded-2xl border-border resize-none"
+            className="min-h-[100px] sm:min-h-[120px] text-sm sm:text-base bg-white rounded-2xl border-border resize-none w-full"
           />
         </div>
       )}
@@ -195,33 +195,33 @@ export function MoodTracker() {
         </p>
         
         {moodHistory.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-2xl border border-border">
-            <div className="text-4xl mb-4">📊</div>
-            <h3 className="text-lg font-medium text-foreground mb-2">No mood entries yet</h3>
-            <p className="text-sm text-muted-foreground">Start tracking your mood to see patterns and insights</p>
+          <div className="text-center py-8 sm:py-12 bg-white rounded-2xl border border-border">
+            <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">📊</div>
+            <h3 className="text-base sm:text-lg font-medium text-foreground mb-2">No mood entries yet</h3>
+            <p className="text-xs sm:text-sm text-muted-foreground px-4">Start tracking your mood to see patterns and insights</p>
           </div>
         ) : (
           <div className="space-y-4">
             {moodHistory.slice(0, 10).map((entry) => (
-              <div key={entry.id} className="bg-white rounded-2xl border border-border p-4">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="text-2xl">{getMoodEmoji(entry.mood)}</div>
-                    <div>
-                      <h3 className="font-medium text-foreground">{getMoodLabel(entry.mood)}</h3>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Calendar className="w-3 h-3" />
-                        <span>{entry.date}</span>
+              <div key={entry.id} className="bg-white rounded-2xl border border-border p-3 sm:p-4">
+                <div className="flex items-start justify-between mb-2 sm:mb-3">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="text-xl sm:text-2xl">{getMoodEmoji(entry.mood)}</div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-medium text-foreground text-sm sm:text-base">{getMoodLabel(entry.mood)}</h3>
+                      <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
+                        <Calendar className="w-3 h-3 flex-shrink-0" />
+                        <span className="truncate">{entry.date}</span>
                       </div>
                     </div>
                   </div>
                 </div>
                 
                 {entry.reasons.length > 0 && (
-                  <div className="mb-3">
-                    <div className="flex flex-wrap gap-2">
+                  <div className="mb-2 sm:mb-3">
+                    <div className="flex flex-wrap gap-1 sm:gap-2">
                       {entry.reasons.map((reason, index) => (
-                        <span key={index} className="px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded-full">
+                        <span key={index} className="px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded-full whitespace-nowrap">
                           {reason}
                         </span>
                       ))}
@@ -230,7 +230,7 @@ export function MoodTracker() {
                 )}
                 
                 {entry.notes && (
-                  <div className="text-sm text-muted-foreground bg-accent/50 rounded-lg p-3">
+                  <div className="text-xs sm:text-sm text-muted-foreground bg-accent/50 rounded-lg p-2 sm:p-3 break-words">
                     "{entry.notes}"
                   </div>
                 )}
@@ -248,12 +248,12 @@ export function MoodTracker() {
 
       {/* Primary Action Button */}
       {selectedMood && (
-        <div className="fixed bottom-20 left-4 right-4 animate-in fade-in duration-700">
+        <div className="fixed bottom-20 left-2 right-2 sm:left-4 sm:right-4 animate-in fade-in duration-700 z-50">
           <button 
             onClick={handleSubmit}
             className="w-full bg-[#F28CAB] hover:bg-[#E07A9F] text-white font-semibold 
-                     py-4 px-6 rounded-2xl shadow-lg transition-all duration-200 
-                     min-h-[56px] active:scale-98 hover:shadow-xl"
+                     py-3 sm:py-4 px-4 sm:px-6 rounded-2xl shadow-lg transition-all duration-200 
+                     min-h-[50px] sm:min-h-[56px] active:scale-98 hover:shadow-xl text-sm sm:text-base"
           >
             Log Mood Entry
           </button>
