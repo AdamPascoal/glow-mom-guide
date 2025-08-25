@@ -20,15 +20,16 @@ import MedicalTestForm from "./components/forms/MedicalTestForm";
 import PersonalReminderForm from "./components/forms/PersonalReminderForm";
 import MoodTrackerForm from "./components/forms/MoodTrackerForm";
 import SleepTrackerForm from "./components/forms/SleepTrackerForm";
-import { MobileNavigation, DesktopNavigation } from "./components/layout/Navigation";
+import { MobileNavigation, MobileHeader, DesktopNavigation } from "./components/layout/Navigation";
 
 const queryClient = new QueryClient();
 
 function AppLayout() {
   return (
     <div className="min-h-screen bg-background">
+      <MobileHeader />
       <DesktopNavigation />
-      <main className="pb-20 md:pb-0">
+      <main className="pt-16 pb-20 md:pt-0 md:pb-0">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/community/:communityName" element={<Community />} />

@@ -8,6 +8,26 @@ const navItems = [
   { to: "/profile", icon: User, label: "Profile" },
 ];
 
+export function MobileHeader() {
+  return (
+    <header className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 px-4 py-3 z-50 md:hidden">
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold text-pink-400">
+          BumpDaily
+        </h1>
+        <div className="flex items-center space-x-3">
+          <button className="p-2 rounded-full hover:bg-gray-100 transition-colors touch-manipulation">
+            <Search className="h-5 w-5 text-gray-600" />
+          </button>
+          <button className="p-2 rounded-full hover:bg-gray-100 transition-colors touch-manipulation">
+            <Bell className="h-5 w-5 text-gray-600" />
+          </button>
+        </div>
+      </div>
+    </header>
+  );
+}
+
 export function MobileNavigation() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 md:hidden safe-area-inset-bottom">
