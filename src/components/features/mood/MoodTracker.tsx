@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
+import { WeekNavigator, filterEntriesByWeek } from "@/components/ui/week-navigator";
 import { Heart, Users, Baby, Bed, History, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -45,6 +46,7 @@ export function MoodTracker() {
   const [selectedReasons, setSelectedReasons] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
   const [moodHistory, setMoodHistory] = useState<MoodEntry[]>([]);
+  const [currentWeekOffset, setCurrentWeekOffset] = useState<number>(0);
   const { toast } = useToast();
 
   // Load mood history from localStorage on component mount
@@ -75,7 +77,7 @@ export function MoodTracker() {
       mood: selectedMood,
       reasons: selectedReasons,
       notes: notes,
-      date: new Date().toLocaleDateString(),
+      date: new Date().toISOString().split('T')[0],
       timestamp: Date.now()
     };
 
@@ -188,62 +190,73 @@ export function MoodTracker() {
       {/* Mood History Section */}
       <div className="mb-8">
         <h2 className="text-xl font-semibold text-foreground mb-2">
-          Mood History
+          Weekly Mood History
         </h2>
         <p className="text-sm text-muted-foreground mb-6">
-          Review your past mood entries and patterns
+          Review your mood entries and patterns by week
         </p>
         
-        {moodHistory.length === 0 ? (
-          <div className="text-center py-8 sm:py-12 bg-white rounded-2xl border border-border">
-            <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">📊</div>
-            <h3 className="text-base sm:text-lg font-medium text-foreground mb-2">No mood entries yet</h3>
-            <p className="text-xs sm:text-sm text-muted-foreground px-4">Start tracking your mood to see patterns and insights</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {moodHistory.slice(0, 10).map((entry) => (
-              <div key={entry.id} className="bg-white rounded-2xl border border-border p-3 sm:p-4">
-                <div className="flex items-start justify-between mb-2 sm:mb-3">
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <div className="text-xl sm:text-2xl">{getMoodEmoji(entry.mood)}</div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="font-medium text-foreground text-sm sm:text-base">{getMoodLabel(entry.mood)}</h3>
-                      <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
-                        <Calendar className="w-3 h-3 flex-shrink-0" />
-                        <span className="truncate">{entry.date}</span>
+        <div className="mb-4">
+          <WeekNavigator 
+            currentWeekOffset={currentWeekOffset}
+            onWeekChange={setCurrentWeekOffset}
+            className="bg-pink-50/50 border-pink-200/50"
+          />
+        </div>
+        
+        {(() => {
+          const weeklyMoods = filterEntriesByWeek(moodHistory, currentWeekOffset);
+          const sortedWeeklyMoods = weeklyMoods.sort((a, b) => b.timestamp - a.timestamp);
+          
+          return sortedWeeklyMoods.length === 0 ? (
+            <div className="text-center py-8 sm:py-12 bg-white rounded-2xl border border-border">
+              <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">📊</div>
+              <h3 className="text-base sm:text-lg font-medium text-foreground mb-2">
+                {currentWeekOffset === 0 ? "No mood entries this week" : "No mood entries for this week"}
+              </h3>
+              <p className="text-xs sm:text-sm text-muted-foreground px-4">
+                {currentWeekOffset === 0 ? "Start tracking your mood to see patterns and insights" : "Try selecting a different week"}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {sortedWeeklyMoods.map((entry) => (
+                <div key={entry.id} className="bg-white rounded-2xl border border-border p-3 sm:p-4">
+                  <div className="flex items-start justify-between mb-2 sm:mb-3">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <div className="text-xl sm:text-2xl">{getMoodEmoji(entry.mood)}</div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-medium text-foreground text-sm sm:text-base">{getMoodLabel(entry.mood)}</h3>
+                        <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
+                          <Calendar className="w-3 h-3 flex-shrink-0" />
+                          <span className="truncate">{new Date(entry.date).toLocaleDateString()}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-                
-                {entry.reasons.length > 0 && (
-                  <div className="mb-2 sm:mb-3">
-                    <div className="flex flex-wrap gap-1 sm:gap-2">
-                      {entry.reasons.map((reason, index) => (
-                        <span key={index} className="px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded-full whitespace-nowrap">
-                          {reason}
-                        </span>
-                      ))}
+                  
+                  {entry.reasons.length > 0 && (
+                    <div className="mb-2 sm:mb-3">
+                      <div className="flex flex-wrap gap-1 sm:gap-2">
+                        {entry.reasons.map((reason, index) => (
+                          <span key={index} className="px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded-full whitespace-nowrap">
+                            {reason}
+                          </span>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
-                
-                {entry.notes && (
-                  <div className="text-xs sm:text-sm text-muted-foreground bg-accent/50 rounded-lg p-2 sm:p-3 break-words">
-                    "{entry.notes}"
-                  </div>
-                )}
-              </div>
-            ))}
-            
-            {moodHistory.length > 10 && (
-              <div className="text-center text-sm text-muted-foreground">
-                Showing latest 10 entries out of {moodHistory.length} total
-              </div>
-            )}
-          </div>
-        )}
+                  )}
+                  
+                  {entry.notes && (
+                    <div className="text-xs sm:text-sm text-muted-foreground bg-accent/50 rounded-lg p-2 sm:p-3 break-words">
+                      "{entry.notes}"
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          );
+        })()}
       </div>
 
       {/* Primary Action Button */}

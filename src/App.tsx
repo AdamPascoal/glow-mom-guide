@@ -20,6 +20,7 @@ import MedicalTestForm from "./components/forms/MedicalTestForm";
 import PersonalReminderForm from "./components/forms/PersonalReminderForm";
 import MoodTrackerForm from "./components/forms/MoodTrackerForm";
 import SleepTrackerForm from "./components/forms/SleepTrackerForm";
+import SymptomsTrackerForm from "./components/forms/SymptomsTrackerForm";
 import { MobileNavigation, MobileHeader, DesktopNavigation } from "./components/layout/Navigation";
 
 const queryClient = new QueryClient();
@@ -44,6 +45,7 @@ function AppLayout() {
           <Route path="/add-task/vitamin-supplement" element={<VitaminSupplementForm />} />
           <Route path="/add-task/medical-test" element={<MedicalTestForm />} />
           <Route path="/add-task/personal-reminder" element={<PersonalReminderForm />} />
+          <Route path="/add-task/symptoms-tracker" element={<SymptomsTrackerForm />} />
           <Route path="/library" element={<Library />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="*" element={<NotFound />} />

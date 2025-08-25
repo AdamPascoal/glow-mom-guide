@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Heart, Moon, CheckSquare, Plus, Calendar, Pill, FileText, Bell, BarChart3, ChevronLeft, ChevronRight, Clock } from "lucide-react";
+import { Heart, Moon, CheckSquare, Plus, Calendar, Pill, FileText, Bell, BarChart3, ChevronLeft, ChevronRight, Clock, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ComposedChart, Scatter } from "recharts";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -68,6 +68,16 @@ const taskModules = [
     iconColor: "text-purple-600",
     borderColor: "border-purple-200",
     route: "/add-task/personal-reminder"
+  },
+  {
+    id: "symptoms-tracker",
+    title: "Symptoms Tracker",
+    description: "Track pregnancy symptoms and patterns",
+    icon: AlertTriangle,
+    color: "from-orange-100 to-orange-200",
+    iconColor: "text-orange-600",
+    borderColor: "border-orange-200",
+    route: "/add-task/symptoms-tracker"
   }
 ];
 
@@ -443,6 +453,7 @@ export default function Trackers() {
                 
               </div>
             </TabsContent>
+
           </div>
         </Tabs>
 
