@@ -4,8 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Pill, Heart, Trash2, X, ArrowLeft, Check, Edit, Calendar } from "lucide-react";
+import { Plus, Pill, Heart, Trash2, X, ArrowLeft, Check, Edit } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
@@ -33,71 +32,79 @@ interface Vitamin {
   unit: string;
 }
 
-interface VitaminHistoryEntry extends Vitamin {
-  takenAt: Date;
+interface TrackedVitamin extends Vitamin {
+  taken: boolean;
 }
 
 export default function VitaminSupplementForm() {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const [vitaminHistory, setVitaminHistory] = useState<VitaminHistoryEntry[]>([]);
+  const [trackedVitamins, setTrackedVitamins] = useState<TrackedVitamin[]>([]);
   const [userAddedVitamins, setUserAddedVitamins] = useState<Vitamin[]>([]);
   const [isAddVitaminModalOpen, setIsAddVitaminModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
 
   const allAvailableVitamins = useMemo(() => [...predefinedVitamins, ...userAddedVitamins], [userAddedVitamins]);
 
-  const handleToggleVitamin = (vitamin: Vitamin, taken: boolean) => {
-    const today = new Date().toDateString();
-    if (taken) {
-      const newEntry: VitaminHistoryEntry = { ...vitamin, takenAt: new Date() };
-      setVitaminHistory(prev => [...prev, newEntry]);
+  const toggleVitaminTracked = (vitamin: Vitamin) => {
+    const isTracked = trackedVitamins.some(v => v.name === vitamin.name);
+    if (isTracked) {
+      setTrackedVitamins(prev => prev.filter(v => v.name !== vitamin.name));
     } else {
-      setVitaminHistory(prev => prev.filter(entry => 
-        !(entry.name === vitamin.name && entry.takenAt.toDateString() === today)
-      ));
+      setTrackedVitamins(prev => [...prev, { ...vitamin, taken: false }]);
     }
   };
 
-  const isVitaminTakenToday = (vitaminName: string) => {
-    const today = new Date().toDateString();
-    return vitaminHistory.some(entry => entry.name === vitaminName && entry.takenAt.toDateString() === today);
+  const toggleVitaminTaken = (vitaminName: string) => {
+    setTrackedVitamins(prev => prev.map(v => 
+      v.name === vitaminName ? { ...v, taken: !v.taken } : v
+    ));
   };
-
-  const todaysHistory = useMemo(() => {
-    const today = new Date().toDateString();
-    return vitaminHistory.filter(entry => entry.takenAt.toDateString() === today);
-  }, [vitaminHistory]);
 
   const handleAddNewVitamin = (newVitamin: Vitamin) => {
     if (allAvailableVitamins.some(v => v.name.toLowerCase() === newVitamin.name.toLowerCase())) {
-      toast({ title: "Vitamin already exists", variant: "destructive" });
+      toast({
+        title: "Vitamin already exists",
+        description: "This vitamin is already in the list",
+        variant: "destructive"
+      });
       return;
     }
     setUserAddedVitamins(prev => [newVitamin, ...prev]);
-    toast({ title: "Vitamin added! 💊" });
+    toast({
+      title: "Vitamin added! 💊",
+      description: `${newVitamin.name} has been added to your vitamin list`,
+    });
   };
 
   const handleDeleteVitamin = (vitaminName: string) => {
     setUserAddedVitamins(prev => prev.filter(v => v.name !== vitaminName));
-    setVitaminHistory(prev => prev.filter(v => v.name !== vitaminName));
-    toast({ title: "Vitamin deleted" });
+    setTrackedVitamins(prev => prev.filter(v => v.name !== vitaminName));
+    toast({
+      title: "Vitamin deleted",
+      description: `${vitaminName} has been removed`,
+    });
   };
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 pb-20 md:pb-8">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 pb-20 md:pb-8">
         {/* Header */}
-        <div className="bg-white/50 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-10">
+        <div className="bg-white/50 backdrop-blur-sm border-b border-green-200/50 sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 md:px-6 py-4">
             <div className="flex items-center justify-between">
-              <Button variant="ghost" size="icon" onClick={() => navigate("/trackers?tab=tasks")} className="hover:bg-gray-100">
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => navigate("/trackers?tab=tasks")}
+                className="hover:bg-green-100"
+              >
                 <ArrowLeft className="w-5 h-5" />
               </Button>
               <div className="text-center">
-                <h1 className="text-xl font-semibold text-gray-800">Vitamin & Supplement Tracker</h1>
-                <p className="text-sm text-gray-600">Log your daily intake</p>
+                <h1 className="text-xl font-semibold text-gray-800">Vitamin & Supplements</h1>
+                <p className="text-sm text-gray-600">Track your daily intake</p>
               </div>
               <div className="w-10" />
             </div>
@@ -105,75 +112,102 @@ export default function VitaminSupplementForm() {
         </div>
 
         <div className="max-w-4xl mx-auto px-4 md:px-6 py-6 space-y-8">
-          {/* Daily History Card */}
-          <Card className="p-6 border-blue-200 bg-white/80 backdrop-blur-sm">
+          {/* Tracked Vitamins Section */}
+          <Card className="p-6 border-green-200 bg-white/80 backdrop-blur-sm">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-blue-600" />
-                Today's History
+                <Heart className="w-5 h-5 text-green-600" />
+                My Daily Vitamins
               </h2>
-              <span className="text-sm font-medium text-gray-600">
-                {todaysHistory.length} taken
-              </span>
+              <Button
+                size="sm"
+                variant={isEditMode ? "secondary" : "default"}
+                onClick={() => setIsEditMode(!isEditMode)}
+                className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 h-8 text-xs"
+              >
+                {isEditMode ? <><Check className="w-3 h-3 mr-1" /> Done</> : <><Edit className="w-3 h-3 mr-1" /> Edit</>}
+              </Button>
             </div>
-            {todaysHistory.length === 0 ? (
+            {trackedVitamins.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                <Pill className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                <p className="text-lg font-medium mb-1">No vitamins logged today</p>
-                <p className="text-sm">Check off vitamins from the list below to log them.</p>
+                <Heart className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <p className="text-lg font-medium mb-1">No vitamins being tracked</p>
+                <p className="text-sm">Select vitamins from the list below to track them.</p>
               </div>
             ) : (
-              <div className="space-y-2">
-                {todaysHistory.map((entry) => (
-                  <div key={entry.name} className="p-3 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-between">
-                    <span className="font-medium text-gray-800">{entry.name}</span>
-                    <span className="text-sm text-gray-600">{entry.defaultDosage} {entry.unit}</span>
-                  </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                {trackedVitamins.map((vitamin) => (
+                  <Button
+                    key={vitamin.name}
+                    variant={vitamin.taken ? "default" : "outline"}
+                    onClick={() => toggleVitaminTaken(vitamin.name)}
+                    className={`h-auto py-3 flex flex-col items-center justify-center text-center transition-all duration-200 ${vitamin.taken ? 'bg-green-600 text-white' : 'bg-white'}`}
+                  >
+                    <Pill className="w-6 h-6 mb-2" />
+                    <span className="text-sm font-medium leading-tight">{vitamin.name}</span>
+                    <span className="text-xs text-gray-500 mt-1">{vitamin.defaultDosage} {vitamin.unit}</span>
+                  </Button>
                 ))}
               </div>
             )}
           </Card>
 
-          {/* All Vitamins/Medicines Checklist */}
-          <Card className="p-6 border-green-200 bg-white/80 backdrop-blur-sm">
+          {/* All Vitamins/Medicines List */}
+          <Card className="p-6 border-blue-200 bg-white/80 backdrop-blur-sm">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                <Pill className="w-5 h-5 text-green-600" />
-                My Vitamins & Medications
+                <Pill className="w-5 h-5 text-blue-600" />
+                All Vitamins & Medications
               </h2>
-              <div className="flex items-center gap-2">
-                <Button size="sm" variant={isEditMode ? "secondary" : "outline"} onClick={() => setIsEditMode(!isEditMode)}>
-                  {isEditMode ? <><Check className="w-4 h-4 mr-1" /> Done</> : <><Edit className="w-4 h-4 mr-1" /> Edit</>}
-                </Button>
-                <Button size="sm" onClick={() => setIsAddVitaminModalOpen(true)}>
-                  <Plus className="w-4 h-4 mr-1" /> Add New
-                </Button>
-              </div>
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => setIsAddVitaminModalOpen(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 h-8 text-xs"
+              >
+                <Plus className="w-3 h-3 mr-1" />
+                Add New
+              </Button>
             </div>
             
             <div className="space-y-2">
-              {allAvailableVitamins.map((vitamin) => (
-                <div key={vitamin.name} className="p-3 rounded-lg border flex items-center justify-between bg-white">
-                  <div className="flex items-center gap-3">
-                    <Checkbox
-                      id={`vitamin-check-${vitamin.name}`}
-                      checked={isVitaminTakenToday(vitamin.name)}
-                      onCheckedChange={(checked) => handleToggleVitamin(vitamin, !!checked)}
-                    />
-                    <Label htmlFor={`vitamin-check-${vitamin.name}`} className="font-medium text-gray-800 cursor-pointer">
-                      {vitamin.name}
-                    </Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600">{vitamin.defaultDosage} {vitamin.unit}</span>
-                    {isEditMode && userAddedVitamins.some(v => v.name === vitamin.name) && (
-                      <Button size="icon" variant="ghost" className="text-red-500 hover:bg-red-100 h-8 w-8" onClick={() => handleDeleteVitamin(vitamin.name)}>
-                        <Trash2 className="w-4 h-4" />
+              {allAvailableVitamins.map((vitamin) => {
+                const isTracked = trackedVitamins.some(v => v.name === vitamin.name);
+                const isUserAdded = userAddedVitamins.some(v => v.name === vitamin.name);
+                return (
+                  <div
+                    key={vitamin.name}
+                    className={`p-3 rounded-lg border flex items-center justify-between transition-colors ${
+                      isTracked ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'
+                    }`}
+                  >
+                    <div>
+                      <h3 className="font-medium text-gray-800">{vitamin.name}</h3>
+                      <p className="text-sm text-gray-600">{vitamin.defaultDosage} {vitamin.unit}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {isEditMode && isUserAdded && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="text-red-500 hover:bg-red-100 h-8 w-8"
+                          onClick={() => handleDeleteVitamin(vitamin.name)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant={isTracked ? "secondary" : "outline"}
+                        onClick={() => toggleVitaminTracked(vitamin)}
+                        className="w-24"
+                      >
+                        {isTracked ? <><Check className="w-4 h-4 mr-1" /> Tracked</> : <><Plus className="w-4 h-4 mr-1" /> Track</>}
                       </Button>
-                    )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </Card>
         </div>
@@ -195,14 +229,17 @@ function AddVitaminModal({ onClose, onAdd }: { onClose: () => void; onAdd: (vita
   const [unit, setUnit] = useState("mg");
 
   const handleSubmit = () => {
-    if (!name.trim() || !dosage.trim()) { return; }
+    if (!name.trim() || !dosage.trim()) {
+      // Basic validation
+      return;
+    }
     onAdd({ name: name.trim(), defaultDosage: dosage.trim(), unit });
     onClose();
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-auto border border-gray-200">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-auto border border-green-200">
         <div className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-800">Add New Vitamin/Medication</h2>
@@ -223,8 +260,12 @@ function AddVitaminModal({ onClose, onAdd }: { onClose: () => void; onAdd: (vita
               <div>
                 <Label className="text-sm font-medium">Unit</Label>
                 <Select value={unit} onValueChange={setUnit}>
-                  <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
-                  <SelectContent>{dosageUnits.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
+                  <SelectTrigger className="w-24">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {dosageUnits.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                  </SelectContent>
                 </Select>
               </div>
             </div>
