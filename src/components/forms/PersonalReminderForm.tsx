@@ -118,7 +118,7 @@ export default function PersonalReminderForm() {
         duration: 5000,
       });
 
-      navigate('/my-tasks');
+      navigate('/trackers?tab=tasks');
     } catch (error) {
       toast({
         title: "Error saving reminder",
@@ -139,7 +139,7 @@ export default function PersonalReminderForm() {
             <Button 
               variant="ghost" 
               size="icon"
-              onClick={() => navigate("/add-task")}
+              onClick={() => navigate("/trackers?tab=tasks")}
               className="hover:bg-purple-100"
             >
               <ArrowLeft className="w-5 h-5" />

@@ -163,7 +163,7 @@ export default function DoctorAppointmentForm() {
             <Button 
               variant="ghost" 
               size="icon"
-              onClick={() => navigate("/add-task")}
+              onClick={() => navigate("/trackers?tab=tasks")}
               className="hover:bg-red-100"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -384,7 +384,7 @@ export default function DoctorAppointmentForm() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => navigate("/add-task")}
+              onClick={() => navigate("/trackers?tab=tasks")}
               className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
             >
               Cancel

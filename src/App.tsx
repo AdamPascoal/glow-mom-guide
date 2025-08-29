@@ -12,8 +12,6 @@ import Community from "./pages/Community";
 import PostDetail from "./pages/PostDetail";
 import UserProfile from "./pages/UserProfile";
 import NotFound from "./pages/NotFound";
-import AddTask from "./pages/AddTask";
-import MyTasks from "./pages/MyTasks";
 import SwipeableTrackers from "./components/SwipeableTrackers";
 import { MobileNavigation, MobileHeader, DesktopNavigation } from "./components/layout/Navigation";
 
@@ -31,8 +29,6 @@ function AppLayout() {
           <Route path="/post/:postId" element={<PostDetail />} />
           <Route path="/user/:username" element={<UserProfile />} />
           <Route path="/trackers" element={<Trackers />} />
-          <Route path="/add-task" element={<AddTask />} />
-          <Route path="/my-tasks" element={<MyTasks />} />
           <Route path="/add-task/:trackerId" element={<SwipeableTrackers />} />
           <Route path="/library" element={<Library />} />
           <Route path="/profile" element={<Profile />} />

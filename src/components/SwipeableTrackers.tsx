@@ -995,6 +995,115 @@ export default function SwipeableTrackers() {
                         </Button>
                       </div>
                     )}
+
+                    {/* History Record Section - Only for Doctor Appointment */}
+                    {tracker.id === 'doctor-appointment' && (
+                      <div className="mt-6 pt-6 border-t border-gray-200 bg-gray-50/50 rounded-lg p-4">
+                        <h4 className="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-gray-600" />
+                          Appointment History
+                        </h4>
+                        
+                        {/* Summary Stats */}
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                          <div className="bg-blue-50 rounded-lg p-3 text-center">
+                            <div className="text-lg font-bold text-blue-600">
+                              {(() => {
+                                const tasks = JSON.parse(localStorage.getItem('wellness-tasks') || '[]');
+                                const appointments = tasks.filter((task: any) => 
+                                  task.type === 'doctor-appointment' && 
+                                  task.date && 
+                                  new Date(task.date) > new Date()
+                                );
+                                return appointments.length;
+                              })()}
+                            </div>
+                            <div className="text-xs text-blue-700 font-medium">Upcoming</div>
+                          </div>
+                          <div className="bg-green-50 rounded-lg p-3 text-center">
+                            <div className="text-lg font-bold text-green-600">
+                              {(() => {
+                                const tasks = JSON.parse(localStorage.getItem('wellness-tasks') || '[]');
+                                const appointments = tasks.filter((task: any) => 
+                                  task.type === 'doctor-appointment' && 
+                                  (task.status === 'completed' || (task.date && new Date(task.date) <= new Date()))
+                                );
+                                return appointments.length;
+                              })()}
+                            </div>
+                            <div className="text-xs text-green-700 font-medium">Completed</div>
+                          </div>
+                        </div>
+
+                        {/* Recent Appointments List */}
+                        <div className="space-y-2">
+                          <h5 className="text-sm font-medium text-gray-700">Recent Appointments</h5>
+                          {(() => {
+                            const tasks = JSON.parse(localStorage.getItem('wellness-tasks') || '[]');
+                            const appointments = tasks
+                              .filter((task: any) => task.type === 'doctor-appointment')
+                              .sort((a: any, b: any) => {
+                                const dateA = new Date(a.date || a.createdAt);
+                                const dateB = new Date(b.date || b.createdAt);
+                                return dateB.getTime() - dateA.getTime();
+                              })
+                              .slice(0, 3);
+
+                            return appointments.length === 0 ? (
+                              <div className="text-center py-6 text-gray-500">
+                                <Calendar className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                                <p className="text-sm">No appointments scheduled yet</p>
+                                <p className="text-xs text-gray-400">Record your first appointment above</p>
+                              </div>
+                            ) : (
+                              appointments.map((appointment: any) => {
+                                const appointmentDate = appointment.date ? new Date(appointment.date) : null;
+                                const isUpcoming = appointmentDate && appointmentDate > new Date();
+                                
+                                return (
+                                  <div key={appointment.id} className="flex items-center justify-between p-3 bg-white rounded border border-gray-200">
+                                    <div className="flex-1">
+                                      <div className="font-medium text-gray-800 text-sm">
+                                        {appointment.data?.doctorName || 'Doctor'} - {appointment.data?.specialty || 'Appointment'}
+                                      </div>
+                                      <div className="text-xs text-gray-600">
+                                        {appointmentDate ? 
+                                          appointmentDate.toLocaleDateString('en-US', { 
+                                            month: 'short', 
+                                            day: 'numeric',
+                                            year: appointmentDate.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+                                          }) + (appointment.data?.time ? ` at ${appointment.data.time}` : '')
+                                          : 'Date not set'
+                                        }
+                                      </div>
+                                    </div>
+                                    <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                      isUpcoming 
+                                        ? 'bg-blue-100 text-blue-700'
+                                        : 'bg-green-100 text-green-700'
+                                    }`}>
+                                      {isUpcoming ? 'Upcoming' : 'Completed'}
+                                    </div>
+                                  </div>
+                                );
+                              })
+                            );
+                          })()}
+                        </div>
+
+                        {/* View All Link */}
+                        <div className="mt-4 text-center">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate('/trackers?tab=tasks')}
+                            className="text-xs text-gray-600 hover:text-gray-800"
+                          >
+                            View All Appointments →
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </Card>
                 </div>
               );

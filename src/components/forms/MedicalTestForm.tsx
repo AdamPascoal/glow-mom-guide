@@ -101,7 +101,7 @@ export default function MedicalTestForm() {
         duration: 5000,
       });
 
-      navigate('/my-tasks');
+      navigate('/trackers?tab=tasks');
     } catch (error) {
       toast({
         title: "Error saving test",
@@ -122,7 +122,7 @@ export default function MedicalTestForm() {
             <Button 
               variant="ghost" 
               size="icon"
-              onClick={() => navigate("/add-task")}
+              onClick={() => navigate("/trackers?tab=tasks")}
               className="hover:bg-blue-100"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -389,7 +389,7 @@ export default function MedicalTestForm() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => navigate("/add-task")}
+              onClick={() => navigate("/trackers?tab=tasks")}
               className="flex-1 border-blue-200 text-blue-600 hover:bg-blue-50"
             >
               Cancel
