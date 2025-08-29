@@ -675,12 +675,12 @@ export default function SwipeableTrackers() {
   const { toast } = useToast();
   const { getVisibleTrackers, isTrackerVisible } = useMotherhoodStage();
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [currentTranslate, setCurrentTranslate] = useState(0);
   const [prevTranslate, setPrevTranslate] = useState(0);
   const [formDataMap, setFormDataMap] = useState<Record<string, any>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Filter trackers based on visibility
   const visibleTrackers = trackerConfigs.filter(tracker => 
@@ -782,7 +782,7 @@ export default function SwipeableTrackers() {
     const currentTracker = visibleTrackers[currentIndex];
     if (!currentTracker) return;
 
-    // Validate form data for complex forms
+    // Only validate and save data for complex forms
     if (!currentTracker.isSimple) {
       const formData = formDataMap[currentTracker.id];
       
@@ -858,20 +858,18 @@ export default function SwipeableTrackers() {
     }, 1000);
   };
 
+
   const currentTracker = visibleTrackers[currentIndex];
   if (!currentTracker) {
     navigate('/trackers?tab=tasks');
     return null;
   }
 
-  const TrackerComponent = currentTracker.component;
-  const IconComponent = currentTracker.icon;
-
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-8">
       <div className="max-w-2xl mx-auto px-4 md:px-6 py-6">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
+        {/* Header with Navigation */}
+        <div className="flex items-center gap-2 mb-8">
           <Button
             variant="ghost"
             size="sm"
@@ -880,18 +878,8 @@ export default function SwipeableTrackers() {
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <div className="flex-1">
-            <h1 className="text-2xl md:text-3xl font-bold text-card-foreground mb-2">
-              {currentTracker.title}
-            </h1>
-            <p className="text-muted-foreground">
-              {currentTracker.subtitle}
-            </p>
-          </div>
-        </div>
-
-        {/* Navigation Indicators */}
-        <div className="flex justify-between items-center mb-6">
+          
+          {/* Previous Tracker Button */}
           <Button
             variant="ghost"
             size="sm"
@@ -902,19 +890,30 @@ export default function SwipeableTrackers() {
             <ChevronLeft className="w-4 h-4" />
           </Button>
           
-          <div className="flex gap-2">
-            {visibleTrackers.map((_, index) => (
-              <div
-                key={index}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  index === currentIndex 
-                    ? 'bg-primary w-6' 
-                    : 'bg-muted-foreground/30'
-                }`}
-              />
-            ))}
+          <div className="flex-1 text-center">
+            <h1 className="text-xl md:text-2xl font-bold text-card-foreground mb-1">
+              {currentTracker.title}
+            </h1>
+            <p className="text-sm text-muted-foreground mb-2">
+              {currentTracker.subtitle}
+            </p>
+            
+            {/* Navigation Indicators */}
+            <div className="flex justify-center gap-2">
+              {visibleTrackers.map((_, index) => (
+                <div
+                  key={index}
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                    index === currentIndex 
+                      ? 'bg-primary w-6' 
+                      : 'bg-muted-foreground/30'
+                  }`}
+                />
+              ))}
+            </div>
           </div>
           
+          {/* Next Tracker Button */}
           <Button
             variant="ghost"
             size="sm"
@@ -977,6 +976,25 @@ export default function SwipeableTrackers() {
                         }}
                       />
                     )}
+
+                    {/* Record Button - Inside Card for Complex Forms */}
+                    {!tracker.isSimple && (
+                      <div className={`flex mt-6 pt-6 border-t border-gray-100 ${
+                        tracker.id === 'doctor-appointment' || tracker.id === 'vitamin-supplement' || tracker.id === 'personal-reminder' ? 'justify-center' : 'justify-center md:justify-end'
+                      }`}>
+                        <Button
+                          onClick={handleComplete}
+                          disabled={isSubmitting}
+                          className={`w-full md:w-auto px-8 ${tracker.buttonColor}`}
+                        >
+                          {tracker.id === 'doctor-appointment' && <Calendar className="w-4 h-4 mr-2" />}
+                          {tracker.id === 'vitamin-supplement' && <Pill className="w-4 h-4 mr-2" />}
+                          {tracker.id === 'medical-test' && <FileText className="w-4 h-4 mr-2" />}
+                          {tracker.id === 'personal-reminder' && <Bell className="w-4 h-4 mr-2" />}
+                          {isSubmitting ? "Recording..." : "Record"}
+                        </Button>
+                      </div>
+                    )}
                   </Card>
                 </div>
               );
@@ -984,21 +1002,9 @@ export default function SwipeableTrackers() {
           </div>
         </div>
 
-        {/* Complete Button */}
-        <div className="flex justify-center md:justify-end mb-4">
-          <Button
-            onClick={handleComplete}
-            disabled={isSubmitting}
-            className={`w-full md:w-auto px-8 ${currentTracker.buttonColor}`}
-          >
-            <IconComponent className="w-4 h-4 mr-2" />
-            {isSubmitting ? "Saving..." : "Complete Tracking"}
-          </Button>
-        </div>
-
         {/* Swipe Instruction */}
         <div className="text-center text-sm text-muted-foreground mb-4">
-          Swipe left/right to access more trackers ({currentIndex + 1} of {visibleTrackers.length})
+          Swipe or use header arrows to navigate ({currentIndex + 1} of {visibleTrackers.length})
         </div>
       </div>
     </div>

@@ -393,22 +393,15 @@ export default function PersonalReminderForm() {
             )}
           </Card>
 
-          {/* Submit Button */}
-          <div className="flex gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => navigate("/add-task")}
-              className="flex-1 border-purple-200 text-purple-600 hover:bg-purple-50"
-            >
-              Cancel
-            </Button>
+          {/* Record Button */}
+          <div className="flex justify-center">
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+              className="bg-purple-600 hover:bg-purple-700 text-white px-8"
             >
-              {isSubmitting ? "Saving..." : "Set Reminder"}
+              <Bell className="w-4 h-4 mr-2" />
+              {isSubmitting ? "Recording..." : "Record Reminder"}
             </Button>
           </div>
         </form>

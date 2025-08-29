@@ -539,6 +539,95 @@ export default function DoctorAppointmentForm() {
           )}
         </div>
         )}
+
+        {/* History Bar */}
+        <div className="mt-6 bg-white/90 backdrop-blur-sm border border-red-200 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+              <Clock className="w-5 h-5 text-red-600" />
+              Appointment History
+            </h3>
+            <div className="text-sm text-gray-600">
+              Total: {appointments.length} appointments
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-blue-600 mb-1">
+                {getUpcomingAppointments().length}
+              </div>
+              <div className="text-sm text-blue-700 font-medium">Upcoming</div>
+            </div>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-green-600 mb-1">
+                {getPastAppointments().length}
+              </div>
+              <div className="text-sm text-green-700 font-medium">Completed</div>
+            </div>
+          </div>
+
+          {/* Recent Appointments List */}
+          {appointments.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Recent Appointments</h4>
+              <div className="max-h-32 overflow-y-auto space-y-2">
+                {appointments
+                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                  .slice(0, 5)
+                  .map((appointment) => {
+                    const isUpcoming = new Date(appointment.date) >= new Date();
+                    return (
+                      <div
+                        key={appointment.id}
+                        className="flex items-center justify-between p-2 bg-gray-50 rounded-lg text-sm"
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className={`w-2 h-2 rounded-full ${
+                            isUpcoming ? 'bg-blue-500' : 'bg-green-500'
+                          }`} />
+                          <span className="font-medium text-gray-800">
+                            {appointment.data.doctorName}
+                          </span>
+                          <span className="text-gray-600">
+                            ({appointment.data.specialty})
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-gray-600">
+                          <CalendarIcon className="w-3 h-3" />
+                          <span>{new Date(appointment.date).toLocaleDateString()}</span>
+                          {appointment.time && (
+                            <>
+                              <Clock className="w-3 h-3" />
+                              <span>{appointment.time}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+              
+              {appointments.length > 5 && (
+                <div className="text-center pt-2">
+                  <button
+                    onClick={() => setActiveTab(getUpcomingAppointments().length > 0 ? 'upcoming' : 'past')}
+                    className="text-sm text-red-600 hover:text-red-700 font-medium"
+                  >
+                    View all {appointments.length} appointments →
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {appointments.length === 0 && (
+            <div className="text-center py-4 text-gray-500">
+              <CalendarIcon className="w-8 h-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">No appointments scheduled yet</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

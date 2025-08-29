@@ -716,12 +716,12 @@ export default function VitaminSupplementForm() {
                           {vitamin.defaultDosage} {vitamin.unit}
                         </div>
                         
-                        <div className="flex gap-2">
+                        <div className="flex flex-col gap-2">
                           <Button
                             type="button"
                             size="sm"
                             onClick={() => logVitaminTaken(vitamin.name, vitamin.defaultDosage, vitamin.unit)}
-                            className="flex-1 bg-green-600 hover:bg-green-700 text-white h-7 text-xs"
+                            className="w-full bg-green-600 hover:bg-green-700 text-white h-7 text-xs"
                           >
                             <Plus className="w-3 h-3 mr-1" />
                             Log Taken
@@ -731,7 +731,7 @@ export default function VitaminSupplementForm() {
                             variant="outline"
                             size="sm"
                             onClick={() => toggleFavorite(vitamin.name)}
-                            className="h-7 px-2 text-xs text-pink-600 border-pink-300 hover:bg-pink-100"
+                            className="w-full h-7 text-xs text-pink-600 border-pink-300 hover:bg-pink-100"
                           >
                             Remove
                           </Button>
@@ -743,6 +743,19 @@ export default function VitaminSupplementForm() {
               </div>
             )}
           </Card>
+
+          {/* Record Button */}
+          <div className="flex justify-center">
+            <Button
+              type="button"
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="bg-green-600 hover:bg-green-700 text-white px-8"
+            >
+              <Pill className="w-4 h-4 mr-2" />
+              {isSubmitting ? "Recording..." : "Record Vitamins"}
+            </Button>
+          </div>
         </div>
       </div>
 
