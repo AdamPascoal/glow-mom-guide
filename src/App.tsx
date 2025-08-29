@@ -14,13 +14,7 @@ import UserProfile from "./pages/UserProfile";
 import NotFound from "./pages/NotFound";
 import AddTask from "./pages/AddTask";
 import MyTasks from "./pages/MyTasks";
-import DoctorAppointmentForm from "./components/forms/DoctorAppointmentForm";
-import VitaminSupplementForm from "./components/forms/VitaminSupplementForm";
-import MedicalTestForm from "./components/forms/MedicalTestForm";
-import PersonalReminderForm from "./components/forms/PersonalReminderForm";
-import MoodTrackerForm from "./components/forms/MoodTrackerForm";
-import SleepTrackerForm from "./components/forms/SleepTrackerForm";
-import SymptomsTrackerForm from "./components/forms/SymptomsTrackerForm";
+import SwipeableTrackers from "./components/SwipeableTrackers";
 import { MobileNavigation, MobileHeader, DesktopNavigation } from "./components/layout/Navigation";
 
 const queryClient = new QueryClient();
@@ -39,13 +33,7 @@ function AppLayout() {
           <Route path="/trackers" element={<Trackers />} />
           <Route path="/add-task" element={<AddTask />} />
           <Route path="/my-tasks" element={<MyTasks />} />
-          <Route path="/add-task/mood-tracker" element={<MoodTrackerForm />} />
-          <Route path="/add-task/sleep-tracker" element={<SleepTrackerForm />} />
-          <Route path="/add-task/doctor-appointment" element={<DoctorAppointmentForm />} />
-          <Route path="/add-task/vitamin-supplement" element={<VitaminSupplementForm />} />
-          <Route path="/add-task/medical-test" element={<MedicalTestForm />} />
-          <Route path="/add-task/personal-reminder" element={<PersonalReminderForm />} />
-          <Route path="/add-task/symptoms-tracker" element={<SymptomsTrackerForm />} />
+          <Route path="/add-task/:trackerId" element={<SwipeableTrackers />} />
           <Route path="/library" element={<Library />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="*" element={<NotFound />} />
