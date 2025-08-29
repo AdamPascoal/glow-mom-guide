@@ -40,14 +40,14 @@ const taskModules = [
     route: "/add-task/doctor-appointment"
   },
   {
-    id: "vitamin-supplement",
-    title: "Vitamin / Supplement",
-    description: "Track your daily vitamins and supplements",
+    id: "medicine-tracker",
+    title: "Medicine Tracker",
+    description: "Track your daily medications and supplements",
     icon: Pill,
     color: "from-green-100 to-green-200",
     iconColor: "text-green-600", 
     borderColor: "border-green-200",
-    route: "/add-task/vitamin-supplement"
+    route: "/add-task/medicine-tracker"
   },
   {
     id: "medical-test",

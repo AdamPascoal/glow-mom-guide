@@ -14,17 +14,17 @@ const MotherhoodStageContext = createContext<MotherhoodStageContextType | undefi
 const TRACKER_VISIBILITY = {
   'Trying to Conceive': {
     tabs: ['overview', 'tasks'],
-    taskModules: ['mood-tracker', 'sleep-tracker', 'vitamin-supplement', 'symptoms-tracker'],
+    taskModules: ['mood-tracker', 'sleep-tracker', 'medicine-tracker', 'symptoms-tracker'],
     pregnancyJourney: false
   },
   'Incubator Stage': {
     tabs: ['overview', 'tasks'],
-    taskModules: ['mood-tracker', 'sleep-tracker', 'doctor-appointment', 'vitamin-supplement', 'medical-test', 'personal-reminder', 'symptoms-tracker'],
+    taskModules: ['mood-tracker', 'sleep-tracker', 'doctor-appointment', 'medicine-tracker', 'medical-test', 'personal-reminder', 'symptoms-tracker'],
     pregnancyJourney: true
   },
   'Veteran Stage': {
     tabs: ['overview', 'tasks'],
-    taskModules: ['mood-tracker', 'sleep-tracker', 'doctor-appointment', 'vitamin-supplement', 'personal-reminder', 'symptoms-tracker'],
+    taskModules: ['mood-tracker', 'sleep-tracker', 'doctor-appointment', 'medicine-tracker', 'personal-reminder', 'symptoms-tracker'],
     pregnancyJourney: false
   }
 };

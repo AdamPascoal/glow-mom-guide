@@ -42,7 +42,7 @@ const appointmentTypes = [
   "Other"
 ];
 
-const vitaminTypes = [
+const medicineTypes = [
   "Prenatal Vitamin",
   "Folic Acid",
   "Iron",
@@ -211,7 +211,7 @@ const DoctorAppointmentTracker = ({ onDataChange }: { onDataChange: (data: any) 
   );
 };
 
-const VitaminSupplementTracker = ({ onDataChange }: { onDataChange: (data: any) => void }) => {
+const MedicineTracker = ({ onDataChange }: { onDataChange: (data: any) => void }) => {
   const [formData, setFormData] = useState({
     name: "",
     type: "",
@@ -242,12 +242,12 @@ const VitaminSupplementTracker = ({ onDataChange }: { onDataChange: (data: any) 
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="name">Vitamin/Supplement Name *</Label>
+          <Label htmlFor="name">Medicine/Medication Name *</Label>
           <Input
             id="name"
             value={formData.name}
             onChange={(e) => setFormData({...formData, name: e.target.value})}
-            placeholder="e.g., Prenatal Vitamins"
+            placeholder="e.g., Prenatal Vitamins, Aspirin"
           />
         </div>
         
@@ -258,7 +258,7 @@ const VitaminSupplementTracker = ({ onDataChange }: { onDataChange: (data: any) 
               <SelectValue placeholder="Select type" />
             </SelectTrigger>
             <SelectContent>
-              {vitaminTypes.map((type) => (
+              {medicineTypes.map((type) => (
                 <SelectItem key={type} value={type}>
                   {type}
                 </SelectItem>
@@ -629,16 +629,16 @@ const trackerConfigs = [
     isSimple: false
   },
   {
-    id: "vitamin-supplement",
-    title: "Vitamin / Supplement",
-    subtitle: "Track your daily vitamins and supplements",
+    id: "medicine-tracker",
+    title: "Medicine Tracker",
+    subtitle: "Track your daily medications and supplements",
     icon: Pill,
     color: "from-green-100 to-green-200",
     iconColor: "text-green-600",
     buttonColor: "bg-green-600 hover:bg-green-700",
-    component: VitaminSupplementTracker,
-    completionMessage: "Vitamin/Supplement Added! 💊",
-    completionDescription: "Your vitamin/supplement has been added to your routine.",
+    component: MedicineTracker,
+    completionMessage: "Medicine Added! 💊",
+    completionDescription: "Your medicine has been added to your routine.",
     isSimple: false
   },
   {
@@ -796,7 +796,7 @@ export default function SwipeableTrackers() {
           });
           return;
         }
-      } else if (currentTracker.id === 'vitamin-supplement') {
+      } else if (currentTracker.id === 'medicine-tracker') {
         if (!formData?.name || !formData?.type || !formData?.dosage) {
           toast({
             title: "Missing required fields",
@@ -965,7 +965,7 @@ export default function SwipeableTrackers() {
 
                     {/* Render the appropriate tracker component */}
                     {tracker.isSimple ? (
-                      <TrackerComp />
+                      <TrackerComp {...({} as any)} />
                     ) : (
                       <TrackerComp 
                         onDataChange={(data: any) => {
@@ -980,7 +980,7 @@ export default function SwipeableTrackers() {
                     {/* Record Button - Inside Card for Complex Forms */}
                     {!tracker.isSimple && (
                       <div className={`flex mt-6 pt-6 border-t border-gray-100 ${
-                        tracker.id === 'doctor-appointment' || tracker.id === 'vitamin-supplement' || tracker.id === 'personal-reminder' ? 'justify-center' : 'justify-center md:justify-end'
+                        tracker.id === 'doctor-appointment' || tracker.id === 'medicine-tracker' || tracker.id === 'personal-reminder' ? 'justify-center' : 'justify-center md:justify-end'
                       }`}>
                         <Button
                           onClick={handleComplete}
@@ -988,7 +988,7 @@ export default function SwipeableTrackers() {
                           className={`w-full md:w-auto px-8 ${tracker.buttonColor}`}
                         >
                           {tracker.id === 'doctor-appointment' && <Calendar className="w-4 h-4 mr-2" />}
-                          {tracker.id === 'vitamin-supplement' && <Pill className="w-4 h-4 mr-2" />}
+                          {tracker.id === 'medicine-tracker' && <Pill className="w-4 h-4 mr-2" />}
                           {tracker.id === 'medical-test' && <FileText className="w-4 h-4 mr-2" />}
                           {tracker.id === 'personal-reminder' && <Bell className="w-4 h-4 mr-2" />}
                           {isSubmitting ? "Recording..." : "Record"}
