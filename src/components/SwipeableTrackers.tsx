@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ArrowLeft, Heart, Moon, Calendar, Pill, FileText, Bell, AlertTriangle, ChevronLeft, ChevronRight, Clock, Plus, Check } from "lucide-react";
+import { ArrowLeft, Heart, Moon, Calendar, Pill, FileText, Bell, AlertTriangle, ChevronLeft, ChevronRight, Clock, Plus, Check, X, History } from "lucide-react";
 import { MoodTracker } from "@/components/features/mood/MoodTracker";
 import { SleepTracker } from "@/components/features/sleep/SleepTracker";
 import { SymptomsTracker } from "@/components/SymptomsTracker";
@@ -227,36 +227,142 @@ const predefinedMedicines = [
   { name: "Choline", defaultDosage: "450", unit: "mg" }
 ];
 
+const dosageUnits = ["mg", "mcg", "IU", "ml", "capsule", "tablet", "drops", "gummies"];
+
+interface MedicineHistoryEntry {
+  date: string;
+  medicines: string[];
+  timestamp: number;
+}
+
 const MedicineTracker = ({ onDataChange }: { onDataChange: (data: any) => void }) => {
   const [checkedMedicines, setCheckedMedicines] = useState<string[]>([]);
+  const [selectedMedicines, setSelectedMedicines] = useState<Array<{name: string, defaultDosage: string, unit: string}>>([]);
+  const [showMedicineSelector, setShowMedicineSelector] = useState(false);
+  const [medicineHistory, setMedicineHistory] = useState<MedicineHistoryEntry[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [currentDate] = useState(new Date());
+
+  const allMedicines = [...selectedMedicines];
+
+  // Load history from localStorage on component mount
+  useEffect(() => {
+    const savedHistory = localStorage.getItem('medicineHistory');
+    if (savedHistory) {
+      setMedicineHistory(JSON.parse(savedHistory));
+    }
+  }, []);
+
+  // Load today's medicines from history if they exist
+  useEffect(() => {
+    const today = format(currentDate, 'yyyy-MM-dd');
+    const todayEntry = medicineHistory.find(entry => entry.date === today);
+    if (todayEntry) {
+      setCheckedMedicines(todayEntry.medicines);
+    }
+  }, [medicineHistory, currentDate]);
 
   useEffect(() => {
     onDataChange({
       checkedMedicines,
       completedCount: checkedMedicines.length,
-      totalCount: predefinedMedicines.length
+      totalCount: allMedicines.length
     });
-  }, [checkedMedicines, onDataChange]);
+  }, [checkedMedicines, allMedicines.length, onDataChange]);
 
   const toggleMedicine = (medicineName: string) => {
-    setCheckedMedicines(prev => 
-      prev.includes(medicineName) 
+    setCheckedMedicines(prev => {
+      const newChecked = prev.includes(medicineName) 
         ? prev.filter(name => name !== medicineName)
-        : [...prev, medicineName]
-    );
+        : [...prev, medicineName];
+      
+      return newChecked;
+    });
+  };
+
+  // Auto-save whenever checkedMedicines changes
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      handleSaveMedicines();
+    }, 500);
+    
+    return () => clearTimeout(timeoutId);
+  }, [checkedMedicines]);
+
+  const addMedicineToList = (medicine: {name: string, defaultDosage: string, unit: string}) => {
+    if (!selectedMedicines.some(m => m.name === medicine.name)) {
+      setSelectedMedicines(prev => [...prev, medicine]);
+    }
+  };
+
+  const handleSaveMedicines = () => {
+    const today = format(currentDate, 'yyyy-MM-dd');
+    const newEntry: MedicineHistoryEntry = {
+      date: today,
+      medicines: [...checkedMedicines],
+      timestamp: Date.now()
+    };
+
+    // Update history - replace today's entry if it exists, otherwise add new
+    setMedicineHistory(prevHistory => {
+      const updatedHistory = prevHistory.filter(entry => entry.date !== today);
+      updatedHistory.push(newEntry);
+      
+      // Sort by date (newest first) and keep last 30 days
+      const sortedHistory = updatedHistory
+        .sort((a, b) => b.timestamp - a.timestamp)
+        .slice(0, 30);
+      
+      localStorage.setItem('medicineHistory', JSON.stringify(sortedHistory));
+      return sortedHistory;
+    });
   };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-800">Daily Medicine Checklist</h3>
-        <div className="text-sm text-gray-600">
-          {checkedMedicines.length} of {predefinedMedicines.length} completed
+        <div className="flex items-center gap-3">
+          <div className="text-sm text-gray-600">
+            {checkedMedicines.length} of {allMedicines.length} completed
+          </div>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log("History button clicked - toggling history");
+              setShowHistory(!showHistory);
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 h-8 text-xs rounded-md flex items-center gap-1 relative z-50"
+            style={{ pointerEvents: 'auto' }}
+          >
+            <History className="w-3 h-3" />
+            History
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log("Add button clicked - opening medicine selector");
+              setShowMedicineSelector(true);
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 h-8 text-xs rounded-md flex items-center gap-1 relative z-50"
+            style={{ pointerEvents: 'auto' }}
+          >
+            <Plus className="w-3 h-3" />
+            Add
+          </button>
         </div>
       </div>
       
       <div className="space-y-3 max-h-96 overflow-y-auto">
-        {predefinedMedicines.map((medicine) => {
+        {allMedicines.map((medicine) => {
           const isChecked = checkedMedicines.includes(medicine.name);
           return (
             <div
@@ -291,9 +397,181 @@ const MedicineTracker = ({ onDataChange }: { onDataChange: (data: any) => void }
           );
         })}
       </div>
+      
+      {/* Medicine Selector Card */}
+      {showMedicineSelector && (
+        <MedicineSelectorCard
+          onClose={() => setShowMedicineSelector(false)}
+          onSelectMedicine={addMedicineToList}
+          alreadySelected={selectedMedicines.map(m => m.name)}
+        />
+      )}
+
+      {/* Medicine History */}
+      {showHistory && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-auto border border-blue-200 max-h-[80vh] overflow-hidden">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                  <History className="w-5 h-5 text-blue-600" />
+                  Medicine History
+                </h3>
+                <button
+                  onClick={() => setShowHistory(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              {medicineHistory.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Pill className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p>No medicine history yet</p>
+                  <p className="text-sm">Start tracking your medicines to see history here</p>
+                </div>
+              ) : (
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  {medicineHistory.map((entry) => {
+                    const entryDate = new Date(entry.timestamp);
+                    const isToday = entry.date === format(currentDate, 'yyyy-MM-dd');
+                    
+                    return (
+                      <div
+                        key={entry.date}
+                        className={`p-4 rounded-lg border ${
+                          isToday ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-gray-500" />
+                            <span className="font-medium text-gray-800">
+                              {isToday ? 'Today' : format(entryDate, 'MMM dd, yyyy')}
+                            </span>
+                            {isToday && (
+                              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                                Current
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            {entry.medicines.length} medicines taken
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                          {entry.medicines.map((medicineName) => {
+                            const medicine = predefinedMedicines.find(m => m.name === medicineName) || 
+                                           selectedMedicines.find(m => m.name === medicineName);
+                            return (
+                              <div
+                                key={medicineName}
+                                className="flex items-center gap-2 text-sm p-2 bg-white rounded border border-gray-100"
+                              >
+                                <Check className="w-3 h-3 text-green-600" />
+                                <span className="font-medium">{medicineName}</span>
+                                {medicine && (
+                                  <span className="text-gray-500 text-xs">
+                                    {medicine.defaultDosage} {medicine.unit}
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                        
+                        {entry.medicines.length === 0 && (
+                          <div className="text-sm text-gray-500 italic">
+                            No medicines taken this day
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
+const MedicineSelectorCard = ({ 
+  onClose, 
+  onSelectMedicine,
+  alreadySelected
+}: { 
+  onClose: () => void; 
+  onSelectMedicine: (medicine: {name: string, defaultDosage: string, unit: string}) => void;
+  alreadySelected: string[];
+}) => {
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-auto border border-green-200 max-h-[80vh] overflow-hidden">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-800">Select Medicines to Add</h3>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-y-auto">
+            {predefinedMedicines.map((medicine) => {
+              const isAlreadySelected = alreadySelected.includes(medicine.name);
+              return (
+                <div
+                  key={medicine.name}
+                  className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                    isAlreadySelected 
+                      ? 'bg-gray-100 border-gray-300 opacity-50 cursor-not-allowed' 
+                      : 'bg-white border-gray-200 hover:border-green-300 hover:bg-green-50'
+                  }`}
+                  onClick={() => {
+                    if (!isAlreadySelected) {
+                      onSelectMedicine(medicine);
+                      onClose();
+                    }
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-medium text-gray-800">{medicine.name}</h4>
+                      <p className="text-sm text-gray-600">
+                        {medicine.defaultDosage} {medicine.unit}
+                      </p>
+                    </div>
+                    {isAlreadySelected ? (
+                      <Check className="w-4 h-4 text-gray-400" />
+                    ) : (
+                      <Plus className="w-4 h-4 text-green-600" />
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <button
+              onClick={onClose}
+              className="w-full px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};  
 
 const MedicalTestTracker = ({ onDataChange }: { onDataChange: (data: any) => void }) => {
   const [formData, setFormData] = useState({

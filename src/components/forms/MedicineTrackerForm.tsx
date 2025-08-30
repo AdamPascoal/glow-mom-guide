@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Pill, ArrowLeft, Check } from "lucide-react";
+import { Pill, ArrowLeft, Check, History, Calendar } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
 
 const predefinedMedicines = [
   { name: "Folic Acid", defaultDosage: "400", unit: "mcg" },
@@ -28,11 +29,37 @@ interface Medicine {
   unit: string;
 }
 
+interface MedicineHistoryEntry {
+  date: string;
+  medicines: string[];
+  timestamp: number;
+}
+
 export default function MedicineTrackerForm() {
   const navigate = useNavigate();
   const { toast } = useToast();
   
   const [checkedMedicines, setCheckedMedicines] = useState<string[]>([]);
+  const [medicineHistory, setMedicineHistory] = useState<MedicineHistoryEntry[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [currentDate] = useState(new Date());
+
+  // Load history from localStorage on component mount
+  useEffect(() => {
+    const savedHistory = localStorage.getItem('medicineHistory');
+    if (savedHistory) {
+      setMedicineHistory(JSON.parse(savedHistory));
+    }
+  }, []);
+
+  // Load today's medicines from history if they exist
+  useEffect(() => {
+    const today = format(currentDate, 'yyyy-MM-dd');
+    const todayEntry = medicineHistory.find(entry => entry.date === today);
+    if (todayEntry) {
+      setCheckedMedicines(todayEntry.medicines);
+    }
+  }, [medicineHistory, currentDate]);
 
   const toggleMedicine = (medicineName: string) => {
     setCheckedMedicines(prev => 
@@ -43,6 +70,25 @@ export default function MedicineTrackerForm() {
   };
 
   const handleSave = () => {
+    const today = format(currentDate, 'yyyy-MM-dd');
+    const newEntry: MedicineHistoryEntry = {
+      date: today,
+      medicines: [...checkedMedicines],
+      timestamp: Date.now()
+    };
+
+    // Update history - replace today's entry if it exists, otherwise add new
+    const updatedHistory = medicineHistory.filter(entry => entry.date !== today);
+    updatedHistory.push(newEntry);
+    
+    // Sort by date (newest first) and keep last 30 days
+    const sortedHistory = updatedHistory
+      .sort((a, b) => b.timestamp - a.timestamp)
+      .slice(0, 30);
+    
+    setMedicineHistory(sortedHistory);
+    localStorage.setItem('medicineHistory', JSON.stringify(sortedHistory));
+    
     toast({
       title: "Medicine tracker saved! 💊",
       description: `${checkedMedicines.length} medicines marked as taken today`,
@@ -80,8 +126,19 @@ export default function MedicineTrackerForm() {
               <Pill className="w-5 h-5 text-green-600" />
               Daily Medicine Checklist
             </h2>
-            <div className="text-sm text-gray-600">
-              {checkedMedicines.length} of {predefinedMedicines.length} completed
+            <div className="flex items-center gap-3">
+              <div className="text-sm text-gray-600">
+                {checkedMedicines.length} of {predefinedMedicines.length} completed
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowHistory(!showHistory)}
+                className="text-xs px-2 py-1 h-7 border-green-300 text-green-700 hover:bg-green-50"
+              >
+                <History className="w-3 h-3 mr-1" />
+                History
+              </Button>
             </div>
           </div>
           
@@ -134,6 +191,93 @@ export default function MedicineTrackerForm() {
             </Button>
           </div>
         </Card>
+
+        {/* Medicine History */}
+        {showHistory && (
+          <Card className="p-6 border-green-200 bg-white/80 backdrop-blur-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <History className="w-5 h-5 text-green-600" />
+                Medicine History
+              </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowHistory(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                Close
+              </Button>
+            </div>
+            
+            {medicineHistory.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <Pill className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <p>No medicine history yet</p>
+                <p className="text-sm">Start tracking your medicines to see history here</p>
+              </div>
+            ) : (
+              <div className="space-y-4 max-h-96 overflow-y-auto">
+                {medicineHistory.map((entry) => {
+                  const entryDate = new Date(entry.timestamp);
+                  const isToday = entry.date === format(currentDate, 'yyyy-MM-dd');
+                  
+                  return (
+                    <div
+                      key={entry.date}
+                      className={`p-4 rounded-lg border ${
+                        isToday ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4 text-gray-500" />
+                          <span className="font-medium text-gray-800">
+                            {isToday ? 'Today' : format(entryDate, 'MMM dd, yyyy')}
+                          </span>
+                          {isToday && (
+                            <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                              Current
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {entry.medicines.length} medicines taken
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {entry.medicines.map((medicineName) => {
+                          const medicine = predefinedMedicines.find(m => m.name === medicineName);
+                          return (
+                            <div
+                              key={medicineName}
+                              className="flex items-center gap-2 text-sm p-2 bg-white rounded border border-gray-100"
+                            >
+                              <Check className="w-3 h-3 text-green-600" />
+                              <span className="font-medium">{medicineName}</span>
+                              {medicine && (
+                                <span className="text-gray-500 text-xs">
+                                  {medicine.defaultDosage} {medicine.unit}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      
+                      {entry.medicines.length === 0 && (
+                        <div className="text-sm text-gray-500 italic">
+                          No medicines taken this day
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </Card>
+        )}
       </div>
     </div>
   );
