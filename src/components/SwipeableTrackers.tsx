@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ArrowLeft, Heart, Moon, Calendar, Pill, FileText, Bell, AlertTriangle, ChevronLeft, ChevronRight, Clock, Plus } from "lucide-react";
+import { ArrowLeft, Heart, Moon, Calendar, Pill, FileText, Bell, AlertTriangle, ChevronLeft, ChevronRight, Clock, Plus, Check } from "lucide-react";
 import { MoodTracker } from "@/components/features/mood/MoodTracker";
 import { SleepTracker } from "@/components/features/sleep/SleepTracker";
 import { SymptomsTracker } from "@/components/SymptomsTracker";
@@ -211,116 +211,85 @@ const DoctorAppointmentTracker = ({ onDataChange }: { onDataChange: (data: any) 
   );
 };
 
+const predefinedMedicines = [
+  { name: "Folic Acid", defaultDosage: "400", unit: "mcg" },
+  { name: "Prenatal Multivitamin", defaultDosage: "1", unit: "capsule" },
+  { name: "Iron Supplement", defaultDosage: "27", unit: "mg" },
+  { name: "Calcium", defaultDosage: "1000", unit: "mg" },
+  { name: "Vitamin D", defaultDosage: "1000", unit: "IU" },
+  { name: "DHA / Omega-3", defaultDosage: "200", unit: "mg" },
+  { name: "Magnesium", defaultDosage: "350", unit: "mg" },
+  { name: "Probiotic", defaultDosage: "1", unit: "capsule" },
+  { name: "Vitamin B12", defaultDosage: "2.6", unit: "mcg" },
+  { name: "Zinc", defaultDosage: "11", unit: "mg" },
+  { name: "Vitamin C", defaultDosage: "85", unit: "mg" },
+  { name: "Biotin", defaultDosage: "30", unit: "mcg" },
+  { name: "Choline", defaultDosage: "450", unit: "mg" }
+];
+
 const MedicineTracker = ({ onDataChange }: { onDataChange: (data: any) => void }) => {
-  const [formData, setFormData] = useState({
-    name: "",
-    type: "",
-    dosage: "",
-    frequency: "daily",
-    timeOfDay: [] as string[],
-    startDate: new Date(),
-    notes: "",
-    otherType: ""
-  });
+  const [checkedMedicines, setCheckedMedicines] = useState<string[]>([]);
 
   useEffect(() => {
-    onDataChange(formData);
-  }, [formData, onDataChange]);
+    onDataChange({
+      checkedMedicines,
+      completedCount: checkedMedicines.length,
+      totalCount: predefinedMedicines.length
+    });
+  }, [checkedMedicines, onDataChange]);
 
-  const timeSlots = ["Morning", "Afternoon", "Evening", "Before Bed"];
-
-  const handleTimeChange = (time: string, checked: boolean) => {
-    setFormData(prev => ({
-      ...prev,
-      timeOfDay: checked 
-        ? [...prev.timeOfDay, time]
-        : prev.timeOfDay.filter(t => t !== time)
-    }));
+  const toggleMedicine = (medicineName: string) => {
+    setCheckedMedicines(prev => 
+      prev.includes(medicineName) 
+        ? prev.filter(name => name !== medicineName)
+        : [...prev, medicineName]
+    );
   };
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Medicine/Medication Name *</Label>
-          <Input
-            id="name"
-            value={formData.name}
-            onChange={(e) => setFormData({...formData, name: e.target.value})}
-            placeholder="e.g., Prenatal Vitamins, Aspirin"
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="type">Type *</Label>
-          <Select value={formData.type} onValueChange={(value) => setFormData({...formData, type: value})}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select type" />
-            </SelectTrigger>
-            <SelectContent>
-              {medicineTypes.map((type) => (
-                <SelectItem key={type} value={type}>
-                  {type}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-gray-800">Daily Medicine Checklist</h3>
+        <div className="text-sm text-gray-600">
+          {checkedMedicines.length} of {predefinedMedicines.length} completed
         </div>
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="dosage">Dosage *</Label>
-          <Input
-            id="dosage"
-            value={formData.dosage}
-            onChange={(e) => setFormData({...formData, dosage: e.target.value})}
-            placeholder="e.g., 1 tablet, 400mg"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="frequency">Frequency *</Label>
-          <Select value={formData.frequency} onValueChange={(value) => setFormData({...formData, frequency: value})}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select frequency" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="daily">Daily</SelectItem>
-              <SelectItem value="twice-daily">Twice Daily</SelectItem>
-              <SelectItem value="three-times-daily">Three Times Daily</SelectItem>
-              <SelectItem value="weekly">Weekly</SelectItem>
-              <SelectItem value="as-needed">As Needed</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <Label>Time of Day</Label>
-        <div className="grid grid-cols-2 gap-2">
-          {timeSlots.map((time) => (
-            <div key={time} className="flex items-center space-x-2">
+      
+      <div className="space-y-3 max-h-96 overflow-y-auto">
+        {predefinedMedicines.map((medicine) => {
+          const isChecked = checkedMedicines.includes(medicine.name);
+          return (
+            <div
+              key={medicine.name}
+              className={`flex items-center space-x-3 p-3 rounded-lg border transition-colors ${
+                isChecked ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'
+              }`}
+            >
               <Checkbox
-                id={time}
-                checked={formData.timeOfDay.includes(time)}
-                onCheckedChange={(checked) => handleTimeChange(time, checked as boolean)}
+                id={medicine.name}
+                checked={isChecked}
+                onCheckedChange={() => toggleMedicine(medicine.name)}
+                className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
               />
-              <Label htmlFor={time} className="text-sm">{time}</Label>
+              <div className="flex-1">
+                <label 
+                  htmlFor={medicine.name}
+                  className={`font-medium cursor-pointer ${
+                    isChecked ? 'text-green-800 line-through' : 'text-gray-800'
+                  }`}
+                >
+                  {medicine.name}
+                </label>
+                <p className={`text-sm ${isChecked ? 'text-green-600' : 'text-gray-600'}`}>
+                  {medicine.defaultDosage} {medicine.unit}
+                </p>
+              </div>
+              {isChecked && (
+                <Check className="w-5 h-5 text-green-600" />
+              )}
             </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="notes">Notes</Label>
-        <Textarea
-          id="notes"
-          value={formData.notes}
-          onChange={(e) => setFormData({...formData, notes: e.target.value})}
-          placeholder="Any special instructions, side effects to monitor, etc..."
-          className="min-h-[80px]"
-        />
+          );
+        })}
       </div>
     </div>
   );
