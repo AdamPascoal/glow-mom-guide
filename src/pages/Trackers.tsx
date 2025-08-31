@@ -548,18 +548,7 @@ export default function Trackers() {
                       </ComposedChart>
                     </ResponsiveContainer>
                   </div>
-                  
-                  {/* Quick Insights */}
-                  <div className="mt-4 p-4 bg-gray-50 rounded-xl">
-                    <h4 className="font-medium text-gray-800 mb-2">Quick Insights</h4>
-                    <div className="text-sm text-gray-600">
-                      {selectedMoodMetric === 'overallMood' && "Track your daily emotional state to identify patterns and triggers."}
-                      {selectedMoodMetric === 'energy' && "Monitor energy levels to optimize rest and activity balance."}
-                      {selectedMoodMetric === 'stress' && "Identify stress spikes to implement coping strategies effectively."}
-                      {selectedMoodMetric === 'calmness' && "Track irritability patterns to manage hormonal and environmental triggers."}
-                      {selectedMoodMetric === 'emotionalStability' && "Monitor mood swings to identify concerning patterns for healthcare discussion."}
-                    </div>
-                  </div>
+
                 </div>
                 <SymptomOverview symptomEntries={symptomEntriesData} />
               </div>

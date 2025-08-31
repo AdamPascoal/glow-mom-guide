@@ -232,12 +232,14 @@ const dosageUnits = ["mg", "mcg", "IU", "ml", "capsule", "tablet", "drops", "gum
 
 interface MedicineHistoryEntry {
   date: string;
-  medicines: string[];
+  // Backward compatibility: older entries may be string[]; new format uses counts
+  medicines: Record<string, number> | string[];
   timestamp: number;
 }
 
 const MedicineTracker = ({ onDataChange }: { onDataChange: (data: any) => void }) => {
-  const [checkedMedicines, setCheckedMedicines] = useState<string[]>([]);
+  // Map of medicine name -> count for today
+  const [checkedCounts, setCheckedCounts] = useState<Record<string, number>>({});
   const [selectedMedicines, setSelectedMedicines] = useState<Array<{name: string, defaultDosage: string, unit: string}>>([]);
   const [userMedicines, setUserMedicines] = useState<Array<{name: string, defaultDosage: string, unit: string}>>([]);
   const [showMedicineSelector, setShowMedicineSelector] = useState(false);
@@ -276,22 +278,33 @@ const MedicineTracker = ({ onDataChange }: { onDataChange: (data: any) => void }
     setHistoryIndex(idx >= 0 ? idx : 0);
   }, [medicineHistory, currentDate]);
 
+  // Helper to normalize entry.medicines into a counts map
+  const normalizeToCounts = (meds: Record<string, number> | string[]): Record<string, number> => {
+    if (Array.isArray(meds)) {
+      const counts: Record<string, number> = {};
+      meds.forEach(name => { counts[name] = (counts[name] || 0) + 1; });
+      return counts;
+    }
+    return meds || {};
+  };
+
   // Load today's medicines from history if they exist
   useEffect(() => {
     const today = format(currentDate, 'yyyy-MM-dd');
     const todayEntry = medicineHistory.find(entry => entry.date === today);
     if (todayEntry) {
-      setCheckedMedicines(todayEntry.medicines);
+      setCheckedCounts(normalizeToCounts(todayEntry.medicines));
     }
   }, [medicineHistory, currentDate]);
 
   useEffect(() => {
+    const totalTaken = Object.values(checkedCounts).reduce((a, b) => a + b, 0);
     onDataChange({
-      checkedMedicines,
-      completedCount: checkedMedicines.length,
+      checkedMedicines: checkedCounts,
+      completedCount: totalTaken,
       totalCount: allMedicines.length
     });
-  }, [checkedMedicines, allMedicines.length, onDataChange]);
+  }, [checkedCounts, allMedicines.length, onDataChange]);
 
   // persist user selections
   useEffect(() => {
@@ -302,23 +315,23 @@ const MedicineTracker = ({ onDataChange }: { onDataChange: (data: any) => void }
   }, [userMedicines]);
 
   const toggleMedicine = (medicineName: string) => {
-    setCheckedMedicines(prev => {
-      const newChecked = prev.includes(medicineName) 
-        ? prev.filter(name => name !== medicineName)
-        : [...prev, medicineName];
-      
-      return newChecked;
+    setCheckedCounts(prev => {
+      const current = prev[medicineName] || 0;
+      const next = current > 0 ? 0 : 1;
+      const updated = { ...prev };
+      if (next === 0) delete updated[medicineName]; else updated[medicineName] = next;
+      return updated;
     });
   };
 
-  // Auto-save whenever checkedMedicines changes
+  // Auto-save whenever counts change
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       handleSaveMedicines();
     }, 500);
     
     return () => clearTimeout(timeoutId);
-  }, [checkedMedicines]);
+  }, [checkedCounts]);
 
   const addMedicineToList = (medicine: {name: string, defaultDosage: string, unit: string}) => {
     if (!selectedMedicines.some(m => m.name === medicine.name)) {
@@ -330,8 +343,8 @@ const MedicineTracker = ({ onDataChange }: { onDataChange: (data: any) => void }
     setSelectedMedicines(prev => {
       const exists = prev.some(m => m.name === medicine.name);
       if (exists) {
-        // Also uncheck from today's checked list so Quick Log doesn't hide a checked item
-        setCheckedMedicines(cm => cm.filter(n => n !== medicine.name));
+        // Also clear from today's counts so Quick Log doesn't show it
+        setCheckedCounts(cm => { const c = { ...cm }; delete c[medicine.name]; return c; });
         return prev.filter(m => m.name !== medicine.name);
       }
       return [...prev, medicine];
@@ -359,19 +372,38 @@ const MedicineTracker = ({ onDataChange }: { onDataChange: (data: any) => void }
     }
   };
 
-  // Quick toggle from inline history checklist: DOES NOT alter main daily checklist
+  // Quick toggle from inline history checklist: toggles between 0 and 1
   const quickToggleToday = (medicine: {name: string, defaultDosage: string, unit: string}) => {
-    const willCheck = !checkedMedicines.includes(medicine.name);
-    setCheckedMedicines(prev => (
-      willCheck ? [...prev, medicine.name] : prev.filter(n => n !== medicine.name)
-    ));
+    setCheckedCounts(prev => {
+      const current = prev[medicine.name] || 0;
+      const updated = { ...prev };
+      if (current > 0) {
+        delete updated[medicine.name];
+      } else {
+        updated[medicine.name] = 1;
+      }
+      return updated;
+    });
+  };
+
+  const incrementToday = (name: string) => {
+    setCheckedCounts(prev => ({ ...prev, [name]: (prev[name] || 0) + 1 }));
+  };
+  const decrementToday = (name: string) => {
+    setCheckedCounts(prev => {
+      const current = prev[name] || 0;
+      if (current <= 1) {
+        const cp = { ...prev }; delete cp[name]; return cp;
+      }
+      return { ...prev, [name]: current - 1 };
+    });
   };
 
   const handleSaveMedicines = () => {
     const today = format(currentDate, 'yyyy-MM-dd');
     const newEntry: MedicineHistoryEntry = {
       date: today,
-      medicines: [...checkedMedicines],
+      medicines: { ...checkedCounts },
       timestamp: Date.now()
     };
 
@@ -404,12 +436,12 @@ const MedicineTracker = ({ onDataChange }: { onDataChange: (data: any) => void }
         />
       )}
 
-      {/* Inline Recent Medicine History Card (grouped by dates) */}
-      <Card className="p-4 border-green-200 bg-gradient-to-br from-green-50 to-white">
-        <div className="flex items-center mb-3">
+      {/* Inline Medicine Log Card (stacked vertically) */}
+      <Card className="p-5 border-gray-200 bg-white shadow-sm">
+        <div className="flex items-center justify-start mb-3">
           <h4 className="text-base font-semibold text-gray-800 flex items-center gap-2">
             <History className="w-4 h-4 text-green-600" />
-            Recent Medicine History by Date
+            Medicine Log
           </h4>
         </div>
 
@@ -432,53 +464,76 @@ const MedicineTracker = ({ onDataChange }: { onDataChange: (data: any) => void }
               const hasPrev = historyIndex < medicineHistory.length - 1;
               const hasNext = historyIndex > 0;
               return (
-                <div key={entry?.date ?? 'current'} className="p-3 rounded-lg bg-white border border-green-100">
-                  <div className="flex items-center justify-between mb-2">
+                <div key={entry?.date ?? 'current'} className="p-4 rounded-xl bg-white border border-gray-200">
+                  <div className="flex items-center justify-between mb-3">
                     <button
                       type="button"
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (hasPrev) setHistoryIndex(i => Math.min(i + 1, medicineHistory.length - 1)); }}
                       disabled={!hasPrev}
-                      className={`p-1 rounded disabled:opacity-40 disabled:cursor-not-allowed ${hasPrev ? 'hover:bg-green-50' : ''}`}
+                      className={`p-1.5 rounded-md disabled:opacity-40 disabled:cursor-not-allowed ${hasPrev ? 'hover:bg-green-50' : ''}`}
                     >
                       <ChevronLeft className="w-4 h-4 text-gray-600" />
                     </button>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Calendar className="w-3.5 h-3.5 text-gray-500" />
-                      <span className="font-semibold text-gray-800">{label}</span>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-gray-500" />
+                      <span className="font-semibold text-gray-900 text-sm">{label}</span>
                     </div>
                     <button
                       type="button"
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (hasNext) setHistoryIndex(i => Math.max(i - 1, 0)); }}
                       disabled={!hasNext}
-                      className={`p-1 rounded disabled:opacity-40 disabled:cursor-not-allowed ${hasNext ? 'hover:bg-green-50' : ''}`}
+                      className={`p-1.5 rounded-md disabled:opacity-40 disabled:cursor-not-allowed ${hasNext ? 'hover:bg-green-50' : ''}`}
                     >
                       <ChevronRight className="w-4 h-4 text-gray-600" />
                     </button>
                   </div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs text-gray-600">{entry?.medicines.length ?? 0} taken</span>
+                  {/* Progress summary */}
+                  <div className="mb-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs text-gray-600">Taken</span>
+                      {entry && (
+                        (() => {
+                          const counts = normalizeToCounts(entry.medicines);
+                          const total = Object.values(counts).reduce((a,b)=>a+b,0);
+                          return (
+                            <span className="text-xs font-medium text-gray-800">
+                              {total}
+                              {diff === 0 && selectedMedicines.length > 0 ? ` / ${selectedMedicines.length}` : ''}
+                            </span>
+                          );
+                        })()
+                      )}
+                    </div>
+                    {diff === 0 && selectedMedicines.length > 0 && (
+                      <div className="h-1.5 w-full rounded-full bg-green-100 overflow-hidden">
+                        <div
+                          className="h-full bg-green-500 rounded-full transition-all"
+                          style={{ width: `${(() => { const total = entry ? Object.values(normalizeToCounts(entry.medicines)).reduce((a,b)=>a+b,0) : 0; return Math.min(100, Math.round((total / Math.max(1, selectedMedicines.length)) * 100)); })()}%` }}
+                        />
+                      </div>
+                    )}
                   </div>
-                  {entry && entry.medicines.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {entry.medicines.map((medicineName) => {
-                        const medicine = predefinedMedicines.find(m => m.name === medicineName) || 
+                  {entry && Object.keys(normalizeToCounts(entry.medicines)).length > 0 ? (
+                    <ul className="divide-y divide-gray-200">
+                      {Object.entries(normalizeToCounts(entry.medicines)).map(([medicineName, count]) => {
+                        const medicine = predefinedMedicines.find(m => m.name === medicineName) ||
                                          selectedMedicines.find(m => m.name === medicineName);
                         return (
-                          <span
-                            key={medicineName}
-                            className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-green-50 text-green-700 border border-green-100"
-                          >
-                            <Check className="w-3 h-3" />
-                            {medicineName}
+                          <li key={medicineName} className="flex items-center gap-2 py-2 text-sm text-gray-800">
+                            <Check className="w-4 h-4 text-green-600" />
+                            <span className="font-medium">{medicineName}</span>
                             {medicine && (
-                              <span className="text-[10px] text-green-600/80">
+                              <span className="text-xs text-gray-500">
                                 · {medicine.defaultDosage} {medicine.unit}
                               </span>
                             )}
-                          </span>
+                            {count > 1 && (
+                              <span className="ml-auto text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">x{count}</span>
+                            )}
+                          </li>
                         );
                       })}
-                    </div>
+                    </ul>
                   ) : (
                     <div className="text-xs text-gray-500 italic">No medicines taken</div>
                   )}
@@ -517,7 +572,8 @@ const MedicineTracker = ({ onDataChange }: { onDataChange: (data: any) => void }
             {selectedMedicines
               .filter(m => m.name !== 'Folic Acid')
               .map((medicine) => {
-              const isChecked = checkedMedicines.includes(medicine.name);
+              const count = checkedCounts[medicine.name] || 0;
+              const isChecked = count > 0;
               return (
                 <li key={medicine.name} className="py-2">
                   <label
@@ -536,6 +592,27 @@ const MedicineTracker = ({ onDataChange }: { onDataChange: (data: any) => void }
                     <span className="text-xs text-gray-500 whitespace-nowrap">
                       {medicine.defaultDosage} {medicine.unit}
                     </span>
+                    {isChecked && (
+                      <div className="flex items-center gap-1 ml-2">
+                        <button
+                          type="button"
+                          className="w-6 h-6 rounded bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); decrementToday(medicine.name); }}
+                          aria-label={`Decrease ${medicine.name} count`}
+                        >
+                          -
+                        </button>
+                        <span className="min-w-[1.25rem] text-center text-xs font-medium text-gray-800">{count}</span>
+                        <button
+                          type="button"
+                          className="w-6 h-6 rounded bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); incrementToday(medicine.name); }}
+                          aria-label={`Increase ${medicine.name} count`}
+                        >
+                          +
+                        </button>
+                      </div>
+                    )}
                   </label>
                 </li>
               );
@@ -544,89 +621,80 @@ const MedicineTracker = ({ onDataChange }: { onDataChange: (data: any) => void }
         )}
       </Card>
 
-      {/* Medicine History */}
+      {/* Medicine History (full-screen modal) */}
       {showHistory && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-auto border border-blue-200 max-h-[80vh] overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-auto border border-gray-200 max-h-[80vh] overflow-hidden">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                  <History className="w-5 h-5 text-blue-600" />
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <History className="w-5 h-5 text-green-600" />
                   Medicine History
                 </h3>
                 <button
                   onClick={() => setShowHistory(false)}
                   className="text-gray-400 hover:text-gray-600 transition-colors"
+                  aria-label="Close history"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              
+
               {medicineHistory.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-10 text-gray-500">
                   <Pill className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                  <p>No medicine history yet</p>
-                  <p className="text-sm">Start tracking your medicines to see history here</p>
+                  <p className="font-medium">No medicine history yet</p>
+                  <p className="text-sm text-gray-400">Track your medicines to see them here</p>
                 </div>
               ) : (
-                <div className="space-y-4 max-h-96 overflow-y-auto">
-                  {medicineHistory.map((entry) => {
-                    const entryDate = new Date(entry.timestamp);
-                    const isToday = entry.date === format(currentDate, 'yyyy-MM-dd');
-                    
-                    return (
-                      <div
-                        key={entry.date}
-                        className={`p-4 rounded-lg border ${
-                          isToday ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-gray-500" />
-                            <span className="font-medium text-gray-800">
-                              {isToday ? 'Today' : format(entryDate, 'MMM dd, yyyy')}
-                            </span>
-                            {isToday && (
-                              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                                Current
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-sm text-gray-600">
-                            {entry.medicines.length} medicines taken
-                          </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                          {entry.medicines.map((medicineName) => {
-                            const medicine = predefinedMedicines.find(m => m.name === medicineName) || 
-                                           selectedMedicines.find(m => m.name === medicineName);
-                            return (
-                              <div
-                                key={medicineName}
-                                className="flex items-center gap-2 text-sm p-2 bg-white rounded border border-gray-100"
-                              >
-                                <Check className="w-3 h-3 text-green-600" />
-                                <span className="font-medium">{medicineName}</span>
-                                {medicine && (
-                                  <span className="text-gray-500 text-xs">
-                                    {medicine.defaultDosage} {medicine.unit}
-                                  </span>
+                <div className="max-h-96 overflow-y-auto pr-2">
+                  <ol className="relative border-s border-gray-200 pl-4">
+                    {medicineHistory.map((entry) => {
+                      const entryDate = new Date(entry.timestamp);
+                      const isToday = entry.date === format(currentDate, 'yyyy-MM-dd');
+                      return (
+                        <li key={entry.date} className="mb-6 ms-2">
+                          <span className="absolute -start-1.5 mt-2 flex h-3 w-3 items-center justify-center rounded-full bg-green-500 ring-2 ring-white" />
+                          <div className={`rounded-xl border p-4 bg-white border-gray-200`}>
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <Calendar className="w-4 h-4 text-gray-500" />
+                                <span className="font-medium text-gray-900">
+                                  {isToday ? 'Today' : format(entryDate, 'MMM dd, yyyy')}
+                                </span>
+                                {isToday && (
+                                  <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">Current</span>
                                 )}
                               </div>
-                            );
-                          })}
-                        </div>
-                        
-                        {entry.medicines.length === 0 && (
-                          <div className="text-sm text-gray-500 italic">
-                            No medicines taken this day
+                              <div className="text-xs font-medium text-gray-700">
+                                {Object.values(normalizeToCounts(entry.medicines)).reduce((a,b)=>a+b,0)} taken
+                              </div>
+                            </div>
+                            <ul className="divide-y divide-gray-200">
+                              {Object.entries(normalizeToCounts(entry.medicines)).map(([medicineName, count]) => {
+                                const medicine = predefinedMedicines.find(m => m.name === medicineName) ||
+                                                selectedMedicines.find(m => m.name === medicineName);
+                                return (
+                                  <li key={medicineName} className="flex items-center gap-2 text-sm text-gray-700 py-2">
+                                    <Check className="w-4 h-4 text-green-600" />
+                                    <span className="font-medium">{medicineName}</span>
+                                    {medicine && (
+                                      <span className="text-xs text-gray-500">
+                                        · {medicine.defaultDosage} {medicine.unit}
+                                      </span>
+                                    )}
+                                    {count > 1 && (
+                                      <span className="ml-auto text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">x{count}</span>
+                                    )}
+                                  </li>
+                                );
+                              })}
+                            </ul>
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                        </li>
+                      );
+                    })}
+                  </ol>
                 </div>
               )}
             </div>
@@ -1416,10 +1484,11 @@ export default function SwipeableTrackers() {
                         <Icon className={`w-5 h-5 ${tracker.iconColor}`} />
                       </div>
                       <h3 className="text-lg font-semibold text-card-foreground">
-                        {tracker.id === 'sleep-tracker' 
-                          ? "How did you sleep last night?"
-                          : `Today's ${tracker.title.split(' ')[tracker.title.split(' ').length - 1]}`
-                        }
+                        {tracker.id === 'sleep-tracker'
+                          ? 'How did you sleep last night?'
+                          : tracker.id === 'medicine-tracker'
+                          ? 'Medicine Tracker'
+                          : `Today's ${tracker.title.split(' ')[tracker.title.split(' ').length - 1]}`}
                       </h3>
                     </div>
 
