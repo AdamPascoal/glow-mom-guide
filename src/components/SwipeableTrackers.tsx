@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -9,13 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ArrowLeft, Heart, Moon, Calendar, Pill, FileText, Bell, AlertTriangle, ChevronLeft, ChevronRight, Clock, Plus, Check, X, History } from "lucide-react";
+import { ArrowLeft, Heart, Moon, Calendar, Pill, FileText, Bell, AlertTriangle, ChevronLeft, ChevronRight, Clock, Plus, Check, X, History, Pencil } from "lucide-react";
 import { MoodTracker } from "@/components/features/mood/MoodTracker";
 import { SleepTracker } from "@/components/features/sleep/SleepTracker";
 import { SymptomsTracker } from "@/components/SymptomsTracker";
 import { useToast } from "@/hooks/use-toast";
 import { useMotherhoodStage } from "@/contexts/MotherhoodStageContext";
-import { format } from "date-fns";
+import { format, differenceInCalendarDays } from "date-fns";
 import { cn } from "@/lib/utils";
 
 // Form data and helper constants
@@ -238,10 +239,13 @@ interface MedicineHistoryEntry {
 const MedicineTracker = ({ onDataChange }: { onDataChange: (data: any) => void }) => {
   const [checkedMedicines, setCheckedMedicines] = useState<string[]>([]);
   const [selectedMedicines, setSelectedMedicines] = useState<Array<{name: string, defaultDosage: string, unit: string}>>([]);
+  const [userMedicines, setUserMedicines] = useState<Array<{name: string, defaultDosage: string, unit: string}>>([]);
   const [showMedicineSelector, setShowMedicineSelector] = useState(false);
   const [medicineHistory, setMedicineHistory] = useState<MedicineHistoryEntry[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [showAllQuickMedicines, setShowAllQuickMedicines] = useState(false); // no longer shown; kept to avoid wider refactor
   const [currentDate] = useState(new Date());
+  const [historyIndex, setHistoryIndex] = useState(0);
 
   const allMedicines = [...selectedMedicines];
 
@@ -251,7 +255,26 @@ const MedicineTracker = ({ onDataChange }: { onDataChange: (data: any) => void }
     if (savedHistory) {
       setMedicineHistory(JSON.parse(savedHistory));
     }
+    const savedUserMeds = localStorage.getItem('userMedicines');
+    if (savedUserMeds) {
+      try { setUserMedicines(JSON.parse(savedUserMeds)); } catch {}
+    }
+    const savedSelected = localStorage.getItem('selectedMedicines');
+    if (savedSelected) {
+      try { setSelectedMedicines(JSON.parse(savedSelected)); } catch {}
+    }
   }, []);
+
+  // Keep inline history focused on today's entry when available, otherwise most recent
+  useEffect(() => {
+    if (medicineHistory.length === 0) {
+      setHistoryIndex(0);
+      return;
+    }
+    const todayKey = format(currentDate, 'yyyy-MM-dd');
+    const idx = medicineHistory.findIndex(e => e.date === todayKey);
+    setHistoryIndex(idx >= 0 ? idx : 0);
+  }, [medicineHistory, currentDate]);
 
   // Load today's medicines from history if they exist
   useEffect(() => {
@@ -269,6 +292,14 @@ const MedicineTracker = ({ onDataChange }: { onDataChange: (data: any) => void }
       totalCount: allMedicines.length
     });
   }, [checkedMedicines, allMedicines.length, onDataChange]);
+
+  // persist user selections
+  useEffect(() => {
+    localStorage.setItem('selectedMedicines', JSON.stringify(selectedMedicines));
+  }, [selectedMedicines]);
+  useEffect(() => {
+    localStorage.setItem('userMedicines', JSON.stringify(userMedicines));
+  }, [userMedicines]);
 
   const toggleMedicine = (medicineName: string) => {
     setCheckedMedicines(prev => {
@@ -293,6 +324,47 @@ const MedicineTracker = ({ onDataChange }: { onDataChange: (data: any) => void }
     if (!selectedMedicines.some(m => m.name === medicine.name)) {
       setSelectedMedicines(prev => [...prev, medicine]);
     }
+  };
+
+  const toggleSelectedMedicine = (medicine: {name: string, defaultDosage: string, unit: string}) => {
+    setSelectedMedicines(prev => {
+      const exists = prev.some(m => m.name === medicine.name);
+      if (exists) {
+        // Also uncheck from today's checked list so Quick Log doesn't hide a checked item
+        setCheckedMedicines(cm => cm.filter(n => n !== medicine.name));
+        return prev.filter(m => m.name !== medicine.name);
+      }
+      return [...prev, medicine];
+    });
+  };
+
+  const updateSelectedMedicine = (medicine: {name: string, defaultDosage: string, unit: string}) => {
+    setSelectedMedicines(prev => prev.map(m => m.name === medicine.name ? medicine : m));
+    // if user-defined version exists, update it too
+    setUserMedicines(prev => {
+      const exists = prev.some(m => m.name === medicine.name);
+      return exists ? prev.map(m => m.name === medicine.name ? medicine : m) : prev;
+    });
+  };
+
+  const addCustomMedicine = (medicine: {name: string, defaultDosage: string, unit: string}) => {
+    if (!medicine.name.trim()) return;
+    // prevent duplicates by name (override user-defined, not predefined)
+    setUserMedicines(prev => {
+      const filtered = prev.filter(m => m.name !== medicine.name);
+      return [...filtered, medicine];
+    });
+    if (!selectedMedicines.some(m => m.name === medicine.name)) {
+      setSelectedMedicines(prev => [...prev, medicine]);
+    }
+  };
+
+  // Quick toggle from inline history checklist: DOES NOT alter main daily checklist
+  const quickToggleToday = (medicine: {name: string, defaultDosage: string, unit: string}) => {
+    const willCheck = !checkedMedicines.includes(medicine.name);
+    setCheckedMedicines(prev => (
+      willCheck ? [...prev, medicine.name] : prev.filter(n => n !== medicine.name)
+    ));
   };
 
   const handleSaveMedicines = () => {
@@ -320,92 +392,157 @@ const MedicineTracker = ({ onDataChange }: { onDataChange: (data: any) => void }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-800">Daily Medicine Checklist</h3>
-        <div className="flex items-center gap-3">
-          <div className="text-sm text-gray-600">
-            {checkedMedicines.length} of {allMedicines.length} completed
-          </div>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log("History button clicked - toggling history");
-              setShowHistory(!showHistory);
-            }}
-            onMouseDown={(e) => e.stopPropagation()}
-            onTouchStart={(e) => e.stopPropagation()}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 h-8 text-xs rounded-md flex items-center gap-1 relative z-50"
-            style={{ pointerEvents: 'auto' }}
-          >
-            <History className="w-3 h-3" />
-            History
-          </button>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log("Add button clicked - opening medicine selector");
-              setShowMedicineSelector(true);
-            }}
-            onMouseDown={(e) => e.stopPropagation()}
-            onTouchStart={(e) => e.stopPropagation()}
-            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 h-8 text-xs rounded-md flex items-center gap-1 relative z-50"
-            style={{ pointerEvents: 'auto' }}
-          >
-            <Plus className="w-3 h-3" />
-            Add
-          </button>
-        </div>
-      </div>
-      
-      <div className="space-y-3 max-h-96 overflow-y-auto">
-        {allMedicines.map((medicine) => {
-          const isChecked = checkedMedicines.includes(medicine.name);
-          return (
-            <div
-              key={medicine.name}
-              className={`flex items-center space-x-3 p-3 rounded-lg border transition-colors ${
-                isChecked ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'
-              }`}
-            >
-              <Checkbox
-                id={medicine.name}
-                checked={isChecked}
-                onCheckedChange={() => toggleMedicine(medicine.name)}
-                className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
-              />
-              <div className="flex-1">
-                <label 
-                  htmlFor={medicine.name}
-                  className={`font-medium cursor-pointer ${
-                    isChecked ? 'text-green-800 line-through' : 'text-gray-800'
-                  }`}
-                >
-                  {medicine.name}
-                </label>
-                <p className={`text-sm ${isChecked ? 'text-green-600' : 'text-gray-600'}`}>
-                  {medicine.defaultDosage} {medicine.unit}
-                </p>
-              </div>
-              {isChecked && (
-                <Check className="w-5 h-5 text-green-600" />
-              )}
-            </div>
-          );
-        })}
-      </div>
-      
       {/* Medicine Selector Card */}
       {showMedicineSelector && (
         <MedicineSelectorCard
           onClose={() => setShowMedicineSelector(false)}
-          onSelectMedicine={addMedicineToList}
+          medicines={[...userMedicines, ...predefinedMedicines.filter(p => !userMedicines.some(u => u.name === p.name))]}
+          onToggleMedicine={toggleSelectedMedicine}
+          onUpdateMedicine={updateSelectedMedicine}
+          onAddCustomMedicine={addCustomMedicine}
           alreadySelected={selectedMedicines.map(m => m.name)}
         />
       )}
+
+      {/* Inline Recent Medicine History Card (grouped by dates) */}
+      <Card className="p-4 border-green-200 bg-gradient-to-br from-green-50 to-white">
+        <div className="flex items-center mb-3">
+          <h4 className="text-base font-semibold text-gray-800 flex items-center gap-2">
+            <History className="w-4 h-4 text-green-600" />
+            Recent Medicine History by Date
+          </h4>
+        </div>
+
+        {medicineHistory.length === 0 ? (
+          <div className="text-center py-6 text-gray-500">
+            <Pill className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+            <p className="text-sm">No entries yet. Track medicines to see them here.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {(() => {
+              const entry = medicineHistory[historyIndex];
+              const entryDate = entry ? new Date(entry.timestamp) : new Date();
+              const diff = differenceInCalendarDays(currentDate, entryDate);
+              const label = diff === 0
+                ? 'Today'
+                : diff === 1
+                ? 'Yesterday'
+                : format(entryDate, 'EEE, MMM dd, yyyy');
+              const hasPrev = historyIndex < medicineHistory.length - 1;
+              const hasNext = historyIndex > 0;
+              return (
+                <div key={entry?.date ?? 'current'} className="p-3 rounded-lg bg-white border border-green-100">
+                  <div className="flex items-center justify-between mb-2">
+                    <button
+                      type="button"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (hasPrev) setHistoryIndex(i => Math.min(i + 1, medicineHistory.length - 1)); }}
+                      disabled={!hasPrev}
+                      className={`p-1 rounded disabled:opacity-40 disabled:cursor-not-allowed ${hasPrev ? 'hover:bg-green-50' : ''}`}
+                    >
+                      <ChevronLeft className="w-4 h-4 text-gray-600" />
+                    </button>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Calendar className="w-3.5 h-3.5 text-gray-500" />
+                      <span className="font-semibold text-gray-800">{label}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (hasNext) setHistoryIndex(i => Math.max(i - 1, 0)); }}
+                      disabled={!hasNext}
+                      className={`p-1 rounded disabled:opacity-40 disabled:cursor-not-allowed ${hasNext ? 'hover:bg-green-50' : ''}`}
+                    >
+                      <ChevronRight className="w-4 h-4 text-gray-600" />
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-gray-600">{entry?.medicines.length ?? 0} taken</span>
+                  </div>
+                  {entry && entry.medicines.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {entry.medicines.map((medicineName) => {
+                        const medicine = predefinedMedicines.find(m => m.name === medicineName) || 
+                                         selectedMedicines.find(m => m.name === medicineName);
+                        return (
+                          <span
+                            key={medicineName}
+                            className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-green-50 text-green-700 border border-green-100"
+                          >
+                            <Check className="w-3 h-3" />
+                            {medicineName}
+                            {medicine && (
+                              <span className="text-[10px] text-green-600/80">
+                                · {medicine.defaultDosage} {medicine.unit}
+                              </span>
+                            )}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-xs text-gray-500 italic">No medicines taken</div>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+        )}
+      </Card>
+
+      {/* Quick Log Today - separate card with vertically aligned items */}
+      <Card className="p-4 border-green-200 bg-white">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Pill className="w-4 h-4 text-green-600" />
+            <h4 className="text-base font-semibold text-gray-800">Quick Log Today</h4>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowMedicineSelector(true); }}
+              className="w-8 h-8 rounded-md bg-green-600 hover:bg-green-700 text-white flex items-center justify-center"
+              aria-label="Add medicine"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {selectedMedicines.filter(m => m.name !== 'Folic Acid').length === 0 ? (
+          <div className="text-sm text-gray-500 py-3">
+            No quick items yet. Use the + to add medicines.
+          </div>
+        ) : (
+          <ul className="divide-y divide-green-100">
+            {selectedMedicines
+              .filter(m => m.name !== 'Folic Acid')
+              .map((medicine) => {
+              const isChecked = checkedMedicines.includes(medicine.name);
+              return (
+                <li key={medicine.name} className="py-2">
+                  <label
+                    className={`flex items-center gap-2 px-1 rounded-md cursor-pointer transition-colors h-10 ${
+                      isChecked ? 'bg-green-50' : 'bg-transparent hover:bg-green-50'
+                    }`}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
+                  >
+                    <Checkbox
+                      checked={isChecked}
+                      onCheckedChange={() => quickToggleToday(medicine)}
+                      className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                    />
+                    <span className="font-medium text-sm text-gray-800 flex-1 truncate">{medicine.name}</span>
+                    <span className="text-xs text-gray-500 whitespace-nowrap">
+                      {medicine.defaultDosage} {medicine.unit}
+                    </span>
+                  </label>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </Card>
 
       {/* Medicine History */}
       {showHistory && (
@@ -502,16 +639,24 @@ const MedicineTracker = ({ onDataChange }: { onDataChange: (data: any) => void }
 
 const MedicineSelectorCard = ({ 
   onClose, 
-  onSelectMedicine,
+  medicines,
+  onToggleMedicine,
+  onUpdateMedicine,
+  onAddCustomMedicine,
   alreadySelected
 }: { 
   onClose: () => void; 
-  onSelectMedicine: (medicine: {name: string, defaultDosage: string, unit: string}) => void;
+  medicines: Array<{name: string, defaultDosage: string, unit: string}>;
+  onToggleMedicine: (medicine: {name: string, defaultDosage: string, unit: string}) => void;
+  onUpdateMedicine: (medicine: {name: string, defaultDosage: string, unit: string}) => void;
+  onAddCustomMedicine: (medicine: {name: string, defaultDosage: string, unit: string}) => void;
   alreadySelected: string[];
 }) => {
-  return (
+  const [newMed, setNewMed] = useState<{name: string, defaultDosage: string, unit: string}>({ name: "", defaultDosage: "", unit: dosageUnits[0] });
+  const [editMap, setEditMap] = useState<Record<string, {defaultDosage: string, unit: string}>>({});
+  return createPortal(
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-auto border border-green-200 max-h-[80vh] overflow-hidden">
+      <div className="bg-white rounded-xl shadow-2xl w-[70vw] max-w-[800px] max-h-[70vh] mx-auto border border-green-200 overflow-hidden">
         <div className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-800">Select Medicines to Add</h3>
@@ -523,36 +668,103 @@ const MedicineSelectorCard = ({
             </button>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-y-auto">
-            {predefinedMedicines.map((medicine) => {
+          {/* Add custom medicine */}
+          <div className="mb-4 p-3 rounded-lg border border-green-200 bg-green-50">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 items-end">
+              <div>
+                <Label htmlFor="newMedName">Medicine name</Label>
+                <Input id="newMedName" value={newMed.name} onChange={(e) => setNewMed({...newMed, name: e.target.value})} placeholder="e.g., Probiotic" />
+              </div>
+              <div>
+                <Label htmlFor="newMedDose">Dosage</Label>
+                <Input id="newMedDose" value={newMed.defaultDosage} onChange={(e) => setNewMed({...newMed, defaultDosage: e.target.value})} placeholder="e.g., 1" />
+              </div>
+              <div className="flex gap-2 items-end">
+                <div className="flex-1">
+                  <Label>Unit</Label>
+                  <Select value={newMed.unit} onValueChange={(v) => setNewMed({...newMed, unit: v})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Unit" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {dosageUnits.map(u => (<SelectItem key={u} value={u}>{u}</SelectItem>))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  type="button"
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                  onClick={() => { onAddCustomMedicine(newMed); setNewMed({ name: "", defaultDosage: "", unit: dosageUnits[0] }); }}
+                >
+                  Add
+                </Button>
+              </div>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto">
+            {medicines.map((medicine) => {
               const isAlreadySelected = alreadySelected.includes(medicine.name);
               return (
                 <div
                   key={medicine.name}
                   className={`p-3 rounded-lg border cursor-pointer transition-all ${
                     isAlreadySelected 
-                      ? 'bg-gray-100 border-gray-300 opacity-50 cursor-not-allowed' 
+                      ? 'bg-green-50 border-green-300 hover:bg-green-100' 
                       : 'bg-white border-gray-200 hover:border-green-300 hover:bg-green-50'
                   }`}
-                  onClick={() => {
-                    if (!isAlreadySelected) {
-                      onSelectMedicine(medicine);
-                      onClose();
-                    }
-                  }}
+                  onClick={() => onToggleMedicine(medicine)}
                 >
                   <div className="flex items-center justify-between">
                     <div>
                       <h4 className="font-medium text-gray-800">{medicine.name}</h4>
-                      <p className="text-sm text-gray-600">
-                        {medicine.defaultDosage} {medicine.unit}
-                      </p>
+                      {editMap[medicine.name] ? (
+                        <div className="flex items-center gap-2 mt-1">
+                          <Input
+                            className="h-8 w-24"
+                            value={editMap[medicine.name].defaultDosage}
+                            onChange={(e) => setEditMap(prev => ({...prev, [medicine.name]: { ...prev[medicine.name], defaultDosage: e.target.value }}))}
+                          />
+                          <Select
+                            value={editMap[medicine.name].unit}
+                            onValueChange={(v) => setEditMap(prev => ({...prev, [medicine.name]: { ...prev[medicine.name], unit: v }}))}
+                          >
+                            <SelectTrigger className="h-8 w-28">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {dosageUnits.map(u => (<SelectItem key={u} value={u}>{u}</SelectItem>))}
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            type="button"
+                            className="h-8 px-3 bg-green-600 hover:bg-green-700 text-white"
+                            onClick={(e) => { e.stopPropagation(); const updated = { name: medicine.name, defaultDosage: editMap[medicine.name].defaultDosage, unit: editMap[medicine.name].unit }; onUpdateMedicine(updated); setEditMap(prev => { const cp = {...prev}; delete cp[medicine.name]; return cp; }); }}
+                          >
+                            Save
+                          </Button>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-600">
+                          {medicine.defaultDosage} {medicine.unit}
+                        </p>
+                      )}
                     </div>
-                    {isAlreadySelected ? (
-                      <Check className="w-4 h-4 text-gray-400" />
-                    ) : (
-                      <Plus className="w-4 h-4 text-green-600" />
-                    )}
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        className="p-1 rounded hover:bg-green-50"
+                        onClick={(e) => { e.stopPropagation(); setEditMap(prev => ({...prev, [medicine.name]: prev[medicine.name] || { defaultDosage: medicine.defaultDosage, unit: medicine.unit }})); }}
+                        aria-label="Edit dosage"
+                      >
+                        <Pencil className="w-4 h-4 text-gray-600" />
+                      </button>
+                      {isAlreadySelected ? (
+                        <Check className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <Plus className="w-4 h-4 text-green-600" />
+                      )}
+                    </div>
                   </div>
                 </div>
               );
@@ -569,7 +781,8 @@ const MedicineSelectorCard = ({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };  
 
